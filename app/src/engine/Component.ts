@@ -87,11 +87,25 @@ export abstract class SchematicComponent extends Container {
    *
    * Returns the parsed SVG root so callers can read pin element
    * coordinates (circle[id="pin-N"]) for wire attachment points.
+   *
+   * `elementFills`, if given, maps element id -> fill color and is applied
+   * to the DOM before it's handed to SVGScene — e.g. recoloring a
+   * resistor's `id="band-N"` rects from its resistance value.
    */
-  async loadSymbol(url: string): Promise<SVGSVGElement | null> {
+  async loadSymbol(
+    url: string,
+    elementFills?: Record<string, string>,
+  ): Promise<SVGSVGElement | null> {
     const source = await fetch(url).then((r) => r.text());
     const dom = new DOMParser().parseFromString(source, 'image/svg+xml');
     const root = dom.documentElement as unknown as SVGSVGElement;
+
+    if (elementFills) {
+      for (const [id, fill] of Object.entries(elementFills)) {
+        root.querySelector(`#${id}`)?.setAttribute('fill', fill);
+      }
+    }
+
     // SVGScene mutates the DOM it renders — snapshot first so callers can
     // still read authored attributes (pin cx/cy) afterwards.
     const snapshot = root.cloneNode(true) as SVGSVGElement;

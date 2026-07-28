@@ -11,6 +11,7 @@ import {
   type SpiceBinding,
 } from './types';
 import rawLibrary from './components.json';
+import { CAPACITOR_DEFINITIONS, RESISTOR_DEFINITIONS } from './passiveValues';
 
 /**
  * All .inc tube/component models, keyed by absolute-ish module path.
@@ -142,10 +143,34 @@ export class ComponentModel {
       return `X${refDes}${suffix} ${nodes.join(' ')} ${binding.subckt}`;
     });
   }
+
+  /**
+   * Native SPICE element card for a primitive two-terminal part (resistor,
+   * capacitor) — "R<refDes> n1 n2 <ohms>" / "C<refDes> n1 n2 <farads>" —
+   * as opposed to toSpiceInstances' X-instance subckt cards used by tubes,
+   * transformers, etc. `pinNets` maps physical pin numbers to resolved net
+   * names. Returns null for component types with no native SPICE primitive.
+   */
+  toSpicePrimitive(refDes: string, pinNets: Record<string, string>): string | null {
+    const def = this.definition;
+    if (def.type !== ComponentType.Resistor && def.type !== ComponentType.Capacitor) {
+      return null;
+    }
+    const nodes = def.pins.map((pin) => {
+      const net = pinNets[pin.number];
+      if (!net) {
+        throw new Error(`${this.name} ${refDes}: pin ${pin.number} is not connected to a net`);
+      }
+      return net;
+    });
+    const value = def.type === ComponentType.Resistor ? def.properties.resistance : def.properties.capacitance;
+    const letter = def.type === ComponentType.Resistor ? 'R' : 'C';
+    return `${letter}${refDes} ${nodes.join(' ')} ${value}`;
+  }
 }
 
 function parseLibrary(): ComponentModel[] {
-  return rawLibrary.components.map((entry) => {
+  const fromJson = rawLibrary.components.map((entry) => {
     if (!VALID_TYPES.has(entry.type)) {
       throw new Error(
         `components.json: "${entry.id}" has unknown type "${entry.type}"`,
@@ -153,6 +178,10 @@ function parseLibrary(): ComponentModel[] {
     }
     return new ComponentModel(entry as ComponentDefinition);
   });
+  const generated = [...CAPACITOR_DEFINITIONS, ...RESISTOR_DEFINITIONS].map(
+    (entry) => new ComponentModel(entry),
+  );
+  return [...fromJson, ...generated];
 }
 
 const library = parseLibrary();

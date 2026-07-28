@@ -19,6 +19,7 @@ export enum ComponentType {
   Switch = 'switch',
   Jack = 'jack',
   AcInlet = 'ac-inlet',
+  Ground = 'ground',
 }
 
 /**
@@ -59,12 +60,17 @@ export interface ResistorProperties {
   resistance: number; // ohms
   powerRating?: number; // watts
   tolerance?: number; // percent
+  /** Construction/subcategory, e.g. "carbon-comp", "carbon-film", "metal-film", "wirewound". */
+  resistorType?: string;
 }
 
 export interface CapacitorProperties {
   capacitance: number; // farads
   voltageRating?: number; // volts DC
-  dielectric?: string; // "electrolytic", "film", "ceramic"…
+  /** Construction/subcategory, e.g. "electrolytic", "ceramic", "polyester-film". */
+  dielectric?: string;
+  /** Lead style: both leads from one end/side ("radial") or one from each end ("axial"). */
+  orientation?: 'axial' | 'radial';
 }
 
 export interface InductorProperties {
@@ -156,6 +162,11 @@ export interface AcInletProperties {
   fuseRating?: number; // amps, if the module includes a fuse holder
 }
 
+export interface GroundProperties {
+  /** "chassis" (bonded through a bonding resistance) or "earth" (mains PE). */
+  groundType?: 'chassis' | 'earth';
+}
+
 // ---------- SPICE binding ----------
 
 /**
@@ -224,6 +235,7 @@ export type SolderLugStripDefinition = BaseDefinition<
 export type SwitchDefinition = BaseDefinition<ComponentType.Switch, SwitchProperties>;
 export type JackDefinition = BaseDefinition<ComponentType.Jack, JackProperties>;
 export type AcInletDefinition = BaseDefinition<ComponentType.AcInlet, AcInletProperties>;
+export type GroundDefinition = BaseDefinition<ComponentType.Ground, GroundProperties>;
 
 export type ComponentDefinition =
   | WireDefinition
@@ -236,7 +248,8 @@ export type ComponentDefinition =
   | SolderLugStripDefinition
   | SwitchDefinition
   | JackDefinition
-  | AcInletDefinition;
+  | AcInletDefinition
+  | GroundDefinition;
 
 // ---------- helpers ----------
 

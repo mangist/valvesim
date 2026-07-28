@@ -128,6 +128,31 @@
       }
     },
     {
+      "id": "ground-point",
+      "name": "Ground Point",
+      "category": "Wiring",
+      "type": "ground",
+      "description": "Chassis/earth ground reference symbol. Bonds its single pin to the circuit's 0V reference node.",
+      "width": 1.0,
+      "height": 1.2,
+      "symbol": "/components/Ground.svg",
+      "pins": [
+        { "number": "1", "name": "GND", "svgId": "pin-gnd", "terminal": "GND" }
+      ],
+      "properties": {
+        "groundType": "chassis"
+      },
+      "spice": {
+        "file": "Ground.inc",
+        "subckt": "GROUND",
+        "ports": ["GND"],
+        "instances": [
+          { "suffix": "", "portToPin": { "GND": "1" } }
+        ],
+        "notes": "Bonds the pin to node 0 through a 10milliohm resistor (same bonding style as the AC inlet's PE lead and the transformer shield), rather than shorting directly onto node 0."
+      }
+    },
+    {
       "id": "tube-5u4g",
       "name": "5U4G",
       "category": "Rectifier Tubes",

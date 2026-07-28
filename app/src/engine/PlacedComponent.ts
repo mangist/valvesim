@@ -6,7 +6,9 @@ import {
   formatEng,
   potentiometerTaperFraction,
   type PotentiometerProperties,
+  type ResistorProperties,
 } from '../library/types';
+import { getResistorBandColors } from '../library/colorCode';
 import type { ComponentModel } from '../library';
 
 /** Wiper indicator mechanical sweep: 300 degrees, centered on "up". */
@@ -32,6 +34,7 @@ export const REFDES_PREFIX: Record<string, string> = {
   [ComponentType.Jack]: 'J',
   [ComponentType.SolderLugStrip]: 'TS',
   [ComponentType.AcInlet]: 'AC',
+  [ComponentType.Ground]: 'GND',
 };
 
 /**
@@ -116,7 +119,7 @@ export class PlacedComponent extends SchematicComponent {
   async load(): Promise<void> {
     let svgRoot: SVGSVGElement | null = null;
     if (this.model.symbolUrl) {
-      svgRoot = await this.loadSymbol(this.model.symbolUrl);
+      svgRoot = await this.loadSymbol(this.model.symbolUrl, this.bandFills());
     }
 
     for (const pin of this.model.connectablePins) {
@@ -234,6 +237,14 @@ export class PlacedComponent extends SchematicComponent {
       `R${this.refDes}A ${n1} ${n2} ${formatEng(ra)}`,
       `R${this.refDes}B ${n2} ${n3} ${formatEng(rb)}`,
     ].join('\n');
+  }
+
+  /** Resistor band colors (svg ids "band-1".."band-4") from this instance's value. */
+  private bandFills(): Record<string, string> | undefined {
+    if (this.model.type !== ComponentType.Resistor) return undefined;
+    const { resistance, tolerance } = this.model.properties as ResistorProperties;
+    const [d1, d2, mult, tol] = getResistorBandColors(resistance, tolerance);
+    return { 'band-1': d1, 'band-2': d2, 'band-3': mult, 'band-4': tol };
   }
 
   /** Editable name label centered above the symbol. */

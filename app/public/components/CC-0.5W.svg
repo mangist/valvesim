@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+  <!--
+    Carbon composition resistor, 0.5W: small brown cylindrical body with
+    axial leads. Body drawn as a capsule using cubic-bezier rounded ends
+    (no SVG arc commands — @pixi-essentials/svg mis-renders elliptic arcs).
+    Pins carry id="pin-1"/"pin-2" — wire attachment points referenced by
+    components.json -> pins[].svgId.
+  -->
+
+  <!-- Leads -->
+  <line x1="10" y1="30" x2="55" y2="30" stroke="#9AA0A8" stroke-width="3" />
+  <line x1="145" y1="30" x2="190" y2="30" stroke="#9AA0A8" stroke-width="3" />
+
+  <!-- Body: brown carbon-comp cylinder, straight vertical sides -->
+  <path
+    d="M 58 14
+       L 142 14
+       C 143.7 14 145 15.3 145 17
+       L 145 43
+       C 145 44.7 143.7 46 142 46
+       L 58 46
+       C 56.3 46 55 44.7 55 43
+       L 55 17
+       C 55 15.3 56.3 14 58 14
+       Z"
+    fill="#3D2417" stroke="#1A0F08" stroke-width="3.5" />
+
+  <!-- Color bands: digit-1, digit-2, multiplier, tolerance — recolored
+       per-instance from the resistor's value (see colorCode.ts) -->
+  <rect id="band-1" x="82" y="15" width="4.5" height="30" fill="#7B3F00" />
+  <rect id="band-2" x="92.5" y="15" width="4.5" height="30" fill="#1A1A1A" />
+  <rect id="band-3" x="103" y="15" width="4.5" height="30" fill="#E8D63A" />
+  <rect id="band-4" x="113.5" y="15" width="4.5" height="30" fill="#C0C0C0" />
+
+  <!-- Pins -->
+  <g stroke-width="2">
+    <circle id="pin-1" cx="10" cy="30" r="8" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="8.5" cy="28.5" r="2.8" fill="#E6E9EE" stroke="none" />
+
+    <circle id="pin-2" cx="190" cy="30" r="8" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="188.5" cy="28.5" r="2.8" fill="#E6E9EE" stroke="none" />
+  </g>
+</svg>
