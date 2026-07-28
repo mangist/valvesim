@@ -56,6 +56,8 @@ export abstract class SchematicComponent extends Container {
 
   /** Invoked when the user presses a pin (start/finish wiring). */
   onPinDown?: (component: SchematicComponent, pin: Pin) => void;
+  /** Invoked on right-click of a pin — App shows the wire type/gauge menu. */
+  onPinContextMenu?: (component: SchematicComponent, pin: Pin, clientX: number, clientY: number) => void;
 
   protected symbol: Container | null = null;
   protected pinLayer = new Graphics();
@@ -97,11 +99,25 @@ export abstract class SchematicComponent extends Container {
    *
    * Returns the parsed SVG root so callers can read pin element
    * coordinates (circle[id="pin-N"]) for wire attachment points.
+   *
+   * `elementFills`, if given, maps element id -> fill color and is applied
+   * to the DOM before it's handed to SVGScene — e.g. recoloring a
+   * resistor's `id="band-N"` rects from its resistance value.
    */
-  async loadSymbol(url: string): Promise<SVGSVGElement | null> {
+  async loadSymbol(
+    url: string,
+    elementFills?: Record<string, string>,
+  ): Promise<SVGSVGElement | null> {
     const source = await fetch(url).then((r) => r.text());
     const dom = new DOMParser().parseFromString(source, 'image/svg+xml');
     const root = dom.documentElement as unknown as SVGSVGElement;
+
+    if (elementFills) {
+      for (const [id, fill] of Object.entries(elementFills)) {
+        root.querySelector(`#${id}`)?.setAttribute('fill', fill);
+      }
+    }
+
     // SVGScene mutates the DOM it renders — snapshot first so callers can
     // still read authored attributes (pin cx/cy) afterwards.
     const snapshot = root.cloneNode(true) as SVGSVGElement;
@@ -131,6 +147,11 @@ export abstract class SchematicComponent extends Container {
         this.onPinDown?.(this, p);
       },
       (hovered) => this.setPinLabelsVisible(hovered),
+      (p, e) => {
+        e.preventDefault(); // suppress the browser's native context menu
+        e.stopPropagation();
+        this.onPinContextMenu?.(this, p, e.clientX, e.clientY);
+      },
     );
     this.pinViews.push(view);
     this.addChild(view);
@@ -285,6 +306,7 @@ class PinView extends Graphics {
     pin: Pin,
     onDown: (pin: Pin, e: FederatedPointerEvent) => void,
     onHover?: (hovered: boolean) => void,
+    onContextMenu?: (pin: Pin, e: FederatedPointerEvent) => void,
   ) {
     super();
     this.pin = pin;
@@ -302,7 +324,20 @@ class PinView extends Graphics {
       this.refresh();
       onHover?.(false);
     });
-    this.on('pointerdown', (e: FederatedPointerEvent) => onDown(pin, e));
+    this.on('pointerdown', (e: FederatedPointerEvent) => {
+      e.stopPropagation();
+      // Branch on the raw button rather than relying on Pixi's specialized
+      // 'rightdown' event — that one only fires when pointerType is
+      // exactly 'mouse'/'pen' (see EventBoundary.mapPointerDown), so it
+      // silently never arrives for some trackpad/pointer combinations.
+      // Plain 'pointerdown' always fires, for every pointer type.
+      if (e.button === 2) {
+        e.preventDefault(); // suppress the browser's native context menu
+        onContextMenu?.(pin, e);
+      } else {
+        onDown(pin, e);
+      }
+    });
     this.refresh();
   }
 

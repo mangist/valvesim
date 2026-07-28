@@ -52,7 +52,10 @@ export interface PinDefinition {
 // use formatEng() for µF/pF-style display.
 
 export interface WireProperties {
-  gauge?: string; // e.g. "20 AWG"
+  /** Default gauge for wires drawn from this catalog entry (see engine/wireGauges.ts). */
+  gaugeAwg?: number;
+  /** Default type: draping/physics-sagged, or rigid bus wire. */
+  kind?: 'loose' | 'rigid';
   insulation?: string;
 }
 
@@ -60,12 +63,17 @@ export interface ResistorProperties {
   resistance: number; // ohms
   powerRating?: number; // watts
   tolerance?: number; // percent
+  /** Construction/subcategory, e.g. "carbon-comp", "carbon-film", "metal-film", "wirewound". */
+  resistorType?: string;
 }
 
 export interface CapacitorProperties {
   capacitance: number; // farads
   voltageRating?: number; // volts DC
-  dielectric?: string; // "electrolytic", "film", "ceramic"…
+  /** Construction/subcategory, e.g. "electrolytic", "ceramic", "polyester-film". */
+  dielectric?: string;
+  /** Lead style: both leads from one end/side ("radial") or one from each end ("axial"). */
+  orientation?: 'axial' | 'radial';
 }
 
 export interface InductorProperties {
@@ -74,10 +82,33 @@ export interface InductorProperties {
   currentRating?: number; // amps
 }
 
+export type PotentiometerTaper = 'linear' | 'audio' | 'reverse-audio';
+
 export interface PotentiometerProperties {
   resistance: number; // ohms, end-to-end
-  taper?: 'linear' | 'audio' | 'reverse-audio';
+  taper?: PotentiometerTaper;
   powerRating?: number; // watts
+  /** Wiper rotation, 0 (full CCW, pin 1) .. 1 (full CW, pin 3). Default 0.5. */
+  wiperPosition?: number;
+}
+
+/**
+ * Fraction of the total resistance between the CCW end (pin 1) and the
+ * wiper, for a given mechanical wiper position (0..1, linear w.r.t.
+ * rotation). Approximates the standard taper curves — "audio"/logarithmic
+ * pots pack most of the resistance change into the back half of the
+ * rotation; "reverse-audio" mirrors that toward the front half.
+ */
+export function potentiometerTaperFraction(position: number, taper: PotentiometerTaper = 'linear'): number {
+  const pos = Math.min(1, Math.max(0, position));
+  switch (taper) {
+    case 'audio':
+      return pos * pos;
+    case 'reverse-audio':
+      return 1 - (1 - pos) * (1 - pos);
+    default:
+      return pos;
+  }
 }
 
 /** One secondary winding (or tap) of a transformer. */

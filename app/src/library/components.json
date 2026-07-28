@@ -11,7 +11,8 @@
       "height": 0.08,
       "pins": [],
       "properties": {
-        "gauge": "20 AWG",
+        "gaugeAwg": 22,
+        "kind": "loose",
         "insulation": "cloth"
       }
     },
@@ -104,6 +105,27 @@
           }
         ],
         "notes": "Coupled-inductor model generated from datasheet no-load voltages and DCR (matches within 0.2%). Verified against eecircuit-engine. Shield lead is tied to node 0 through 1G internally."
+      }
+    },
+    {
+      "id": "pot-linear-100k",
+      "name": "100k Linear Potentiometer",
+      "category": "Potentiometers",
+      "type": "potentiometer",
+      "description": "PC-mount control potentiometer, 100k ohm end-to-end, linear taper.",
+      "width": 0.75,
+      "height": 1.0,
+      "symbol": "/components/Potentiometer.svg",
+      "pins": [
+        { "number": "1", "name": "CCW", "svgId": "pin-1", "terminal": "1" },
+        { "number": "2", "name": "WIPER", "svgId": "pin-2", "terminal": "2" },
+        { "number": "3", "name": "CW", "svgId": "pin-3", "terminal": "3" }
+      ],
+      "properties": {
+        "resistance": 100000,
+        "taper": "linear",
+        "powerRating": 0.25,
+        "wiperPosition": 0.5
       }
     },
     {
