@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 210">
+  <!--
+    Panel ammeter: dark bezel with a black digital display window and
+    two measurement terminals (P red / N dark). The red 7-segment
+    readout is NOT baked in — PlacedComponent renders a live
+    SevenSegDisplay fitted to the id="meter-display" window, updated by
+    the background solver. Rounded corners are cubic-bezier paths (no
+    rect rx / SVG arcs — @pixi-essentials/svg mis-renders them).
+
+    NOTE: solid colors only — the canvas SVG parser ignores
+    fill-opacity/stroke-opacity/opacity.
+  -->
+
+  <!-- terminal leads -->
+  <line x1="100" y1="160" x2="100" y2="196" stroke="#C33B2E" stroke-width="4" />
+  <line x1="220" y1="160" x2="220" y2="196" stroke="#3A3F47" stroke-width="4" />
+
+  <!-- bezel (r=14 bezier corners) -->
+  <path
+       d="M 34 10
+       L 286 10
+       C 292.3 10 300 17.7 300 24
+       L 300 146
+       C 300 152.3 292.3 160 286 160
+       L 34 160
+       C 27.7 160 20 152.3 20 146
+       L 20 24
+       C 20 17.7 27.7 10 34 10
+       Z"
+       fill="#1B1B1E" stroke="#CDD6D2" stroke-width="3.5" />
+
+  <!-- digital display window (7-seg overlay is fitted to this rect) -->
+  <rect id="meter-display" x="45" y="32" width="230" height="90" fill="#0C0C0C" stroke="#33333D" stroke-width="2.5" />
+
+  <!-- terminal bosses on the bezel underside -->
+  <circle cx="100" cy="146" r="10" fill="#C33B2E" stroke="#7A1F18" stroke-width="2" />
+  <circle cx="220" cy="146" r="10" fill="#26262E" stroke="#57606B" stroke-width="2" />
+
+  <!-- pins -->
+  <g stroke-width="2.5">
+    <circle id="pin-p" cx="100" cy="200" r="9" fill="#C33B2E" stroke="#15100C" />
+    <circle id="pin-n" cx="220" cy="200" r="9" fill="#3A3F47" stroke="#15100C" />
+  </g>
+</svg>

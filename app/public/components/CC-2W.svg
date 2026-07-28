@@ -1,43 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 100">
   <!--
-    Carbon composition resistor, 2W: large brown cylindrical body with
-    axial leads. Body drawn as a capsule using cubic-bezier rounded ends
-    (no SVG arc commands — @pixi-essentials/svg mis-renders elliptic arcs).
+    Carbon composition resistor, 2W: brown cylindrical body with axial
+    leads. Body drawn as a capsule using cubic-bezier rounded ends (no
+    SVG arc commands — @pixi-essentials/svg mis-renders elliptic arcs).
     Pins carry id="pin-1"/"pin-2" — wire attachment points referenced by
     components.json -> pins[].svgId.
+
+    Sized so the rendered part is exactly 2in pin-to-pin (1in body +
+    0.5in leads each side) once scaled to its 0.25in declared height —
+    see passiveValues.ts RESISTOR_SYMBOL_BY_POWER.
   -->
 
   <!-- Leads -->
-  <line x1="10" y1="50" x2="75" y2="50" stroke="#9AA0A8" stroke-width="5" />
-  <line x1="205" y1="50" x2="270" y2="50" stroke="#9AA0A8" stroke-width="5" />
+  <line x1="0" y1="50" x2="200" y2="50" stroke="#9AA0A8" stroke-width="5" />
+  <line x1="600" y1="50" x2="800" y2="50" stroke="#9AA0A8" stroke-width="5" />
 
   <!-- Body: brown carbon-comp cylinder, straight vertical sides -->
   <path
-    d="M 82 18
-       L 198 18
-       C 200.5 18 202 19.5 202 22
-       L 202 78
-       C 202 80.5 200.5 82 198 82
-       L 82 82
-       C 79.5 82 78 80.5 78 78
-       L 78 22
-       C 78 19.5 79.5 18 82 18
+       d="M 205 20
+       L 595 20
+       C 597.25 20 600 22.75 600 25
+       L 600 75
+       C 600 77.25 597.25 80 595 80
+       L 205 80
+       C 202.75 80 200 77.25 200 75
+       L 200 25
+       C 200 22.75 202.75 20 205 20
        Z"
-    fill="#4E2E1B" stroke="#20120A" stroke-width="4.5" />
+       fill="#4E2E1B" stroke="#20120A" stroke-width="5" />
 
   <!-- Color bands: digit-1, digit-2, multiplier, tolerance — recolored
        per-instance from the resistor's value (see colorCode.ts) -->
-  <rect id="band-1" x="109" y="19" width="8" height="62" fill="#7B3F00" />
-  <rect id="band-2" x="127" y="19" width="8" height="62" fill="#1A1A1A" />
-  <rect id="band-3" x="145" y="19" width="8" height="62" fill="#E8D63A" />
-  <rect id="band-4" x="163" y="19" width="8" height="62" fill="#C0C0C0" />
+  <rect id="band-1" x="312.73" y="21" width="21.82" height="58" fill="#7B3F00" />
+  <rect id="band-2" x="363.64" y="21" width="21.82" height="58" fill="#1A1A1A" />
+  <rect id="band-3" x="414.55" y="21" width="21.82" height="58" fill="#E8D63A" />
+  <rect id="band-4" x="465.46" y="21" width="21.82" height="58" fill="#C0C0C0" />
 
   <!-- Pins -->
-  <g stroke-width="2.5">
-    <circle id="pin-1" cx="10" cy="50" r="10" fill="#B9BEC7" stroke="#6E747E" />
-    <circle cx="8" cy="48" r="3.6" fill="#E6E9EE" stroke="none" />
-
-    <circle id="pin-2" cx="270" cy="50" r="10" fill="#B9BEC7" stroke="#6E747E" />
-    <circle cx="268" cy="48" r="3.6" fill="#E6E9EE" stroke="none" />
-  </g>
+  <circle id="pin-1" cx="0" cy="50" r="11.25" fill="#B9BEC7" stroke="#6E747E" stroke-width="2.5" />
+  <circle cx="2.13" cy="47.87" r="4" fill="#E6E9EE" stroke="none" />
+  <circle id="pin-2" cx="800" cy="50" r="11.25" fill="#B9BEC7" stroke="#6E747E" stroke-width="2.5" />
+  <circle cx="797.87" cy="47.87" r="4" fill="#E6E9EE" stroke="none" />
 </svg>

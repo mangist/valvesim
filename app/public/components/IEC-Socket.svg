@@ -5,9 +5,15 @@
     transformer symbols. Mirrored from the reference photo per spec:
     switch on the LEFT, inlet socket (pins) on the RIGHT.
 
+    The red rocker button itself is NOT drawn here — it's rendered as a
+    live Pixi overlay by PlacedComponent so it can be clicked to toggle
+    power on/off. The invisible rect id="switch-rocker" tells the engine
+    where the button sits. All rounded corners use cubic-bezier paths
+    (no rect rx / no SVG arc commands — @pixi-essentials/svg mis-renders
+    arc-based geometry).
+
     3 pins for wire attachment: L (line/brown), N (neutral/blue),
-    PE (protective earth/green-yellow striped, 45° tracer like the
-    transformer's dual-color leads). Each pin circle carries
+    PE (protective earth/green-yellow striped). Each pin circle carries
     id="pin-<lead>" — the wire attachment point referenced by
     components.json → pins[].svgId.
 
@@ -23,24 +29,53 @@
     <line x1="353" y1="150" x2="367" y2="150" stroke="#6E747E" stroke-width="2" />
   </g>
 
-  <!-- ==================== panel body ==================== -->
-  <rect x="40" y="30" width="340" height="140" rx="16" fill="#1B1B1E" stroke="#CDD6D2" stroke-width="3.5" />
+  <!-- ==================== panel body (r=16 bezier corners) ==================== -->
+  <path
+       d="M 56 30
+       L 364 30
+       C 371.2 30 380 38.8 380 46
+       L 380 154
+       C 380 161.2 371.2 170 364 170
+       L 56 170
+       C 48.8 170 40 161.2 40 154
+       L 40 46
+       C 40 38.8 48.8 30 56 30
+       Z"
+       fill="#1B1B1E" stroke="#CDD6D2" stroke-width="3.5" />
 
-  <!-- ==================== rocker switch (left) ==================== -->
-  <rect x="58" y="48" width="132" height="104" rx="12" fill="#101012" stroke="#000000" stroke-width="2" />
-  <rect x="70" y="60" width="108" height="80" rx="9" fill="#D6362A" stroke="#7A1F18" stroke-width="2.5" />
-  <!-- seesaw hinge hint -->
-  <line x1="70" y1="100" x2="178" y2="100" stroke="#7A1F18" stroke-width="1.5" />
-  <!-- "on" dash (IEC 60417-5007) -->
-  <line x1="93" y1="80" x2="109" y2="80" stroke="#EDEDE6" stroke-width="4" stroke-linecap="round" />
-  <!-- "off" circle (IEC 60417-5008) -->
-  <circle cx="149" cy="120" r="9" fill="none" stroke="#EDEDE6" stroke-width="3.5" />
+  <!-- ==================== rocker switch recess (left, r=12 bezier corners) ==================== -->
+  <path
+       d="M 70 48
+       L 178 48
+       C 183.4 48 190 54.6 190 60
+       L 190 140
+       C 190 145.4 183.4 152 178 152
+       L 70 152
+       C 64.6 152 58 145.4 58 140
+       L 58 60
+       C 58 54.6 64.6 48 70 48
+       Z"
+       fill="#101012" stroke="#000000" stroke-width="2" />
+  <!-- rocker button geometry marker: read by PlacedComponent, drawn as a
+       clickable Pixi overlay (power on/off toggle) -->
+  <rect id="switch-rocker" x="70" y="60" width="108" height="80" fill="none" stroke="none" />
 
-  <!-- ==================== IEC C14 inlet recess (right) ==================== -->
-  <rect x="230" y="50" width="120" height="100" rx="10" fill="#101012" stroke="#3A3F47" stroke-width="2.5" />
+  <!-- ==================== IEC C14 inlet recess (right, r=10 bezier corners) ==================== -->
+  <path
+       d="M 240 50
+       L 340 50
+       C 344.5 50 350 55.5 350 60
+       L 350 140
+       C 350 144.5 344.5 150 340 150
+       L 240 150
+       C 235.5 150 230 144.5 230 140
+       L 230 60
+       C 230 55.5 235.5 50 240 50
+       Z"
+       fill="#101012" stroke="#3A3F47" stroke-width="2.5" />
   <!-- line + neutral blade slots -->
-  <rect x="258" y="68" width="10" height="30" rx="2" fill="#3A3F47" stroke="#57606B" stroke-width="1.5" />
-  <rect x="312" y="68" width="10" height="30" rx="2" fill="#3A3F47" stroke="#57606B" stroke-width="1.5" />
+  <rect x="258" y="68" width="10" height="30" fill="#3A3F47" stroke="#57606B" stroke-width="1.5" />
+  <rect x="312" y="68" width="10" height="30" fill="#3A3F47" stroke="#57606B" stroke-width="1.5" />
   <!-- ground pin hole -->
   <circle cx="290" cy="122" r="7" fill="#3A3F47" stroke="#57606B" stroke-width="1.5" />
 

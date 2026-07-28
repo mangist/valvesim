@@ -9,6 +9,7 @@ import type { PlacedWire } from './engine/PlacedWire';
 import type { Pin } from './engine/Component';
 import type { WireKind } from './engine/wireGauges';
 import { buildDemoNetlist } from './simulation/demo';
+import { buildLiveNetlist, readProbes, type LiveProbe } from './simulation/liveMeters';
 import { getComponentById, type ComponentModel } from './library';
 import type { SpiceRequest, SpiceResponse } from './simulation/spice.worker';
 
@@ -23,6 +24,9 @@ export default function App() {
   const wiresRef = useRef(new Map<string, PlacedWire>());
   const wireToolRef = useRef<WireTool | null>(null);
   const refDesCounters = useRef(new Map<string, number>());
+  /** Live metering: probes of the in-flight solve + re-entrancy guard. */
+  const liveProbesRef = useRef<LiveProbe[]>([]);
+  const liveBusyRef = useRef(false);
 
   const nextRefDes = (prefix: string): string => {
     const seq = (refDesCounters.current.get(prefix) ?? 0) + 1;
@@ -158,6 +162,11 @@ export default function App() {
       setPinMenu({ component: component as PlacedComponent, pin, x: clientX, y: clientY });
     };
 
+    // AC inlet rocker: report power state changes in the status bar
+    instance.onSwitchToggle = (component, on) => {
+      setStatusText(`${component.refDes} (${component.label}) power ${on ? 'ON' : 'OFF'}`);
+    };
+
     instance
       .load()
       .then(() => setStatusText(`Placed ${instance.refDes} — ${model.name} · ${instance.guid}`))
@@ -168,8 +177,8 @@ export default function App() {
       );
   };
 
-  // Lazily create the SPICE worker and run a smoke-test netlist
-  const runSimulation = async () => {
+  /** Lazily create the shared SPICE worker (runs are serialized inside it). */
+  const ensureWorker = (): Worker => {
     if (!workerRef.current) {
       workerRef.current = new Worker(
         new URL('./simulation/spice.worker.ts', import.meta.url),
@@ -177,6 +186,17 @@ export default function App() {
       );
       workerRef.current.onmessage = (e: MessageEvent<SpiceResponse>) => {
         const msg = e.data;
+        // 500ms live-meter solves route to the displays, silently
+        if (msg.tag === 'live') {
+          if (msg.type === 'result') {
+            const readings = readProbes(msg.data, liveProbesRef.current);
+            for (const [guid, value] of readings) {
+              instancesRef.current.get(guid)?.setMeterValue(value);
+            }
+          }
+          if (msg.type !== 'progress') liveBusyRef.current = false;
+          return;
+        }
         if (msg.type === 'result') {
           setSimState('done');
           setStatusText(
@@ -191,7 +211,12 @@ export default function App() {
         }
       };
     }
+    return workerRef.current;
+  };
 
+  // Lazily create the SPICE worker and run a smoke-test netlist
+  const runSimulation = async () => {
+    const worker = ensureWorker();
     setSimState('running');
     setStatusText('Running SPICE simulation…');
     try {
@@ -199,7 +224,7 @@ export default function App() {
         type: 'run',
         netlist: await buildDemoNetlist(),
       };
-      workerRef.current.postMessage(request);
+      worker.postMessage(request);
     } catch (err) {
       setSimState('error');
       setStatusText(
@@ -207,6 +232,32 @@ export default function App() {
       );
     }
   };
+
+  // Background solver: every 500ms, re-solve the canvas circuit and push
+  // fresh readings to the meter displays. Skips ticks while a solve is in
+  // flight, and does nothing until a powered AC inlet exists.
+  useEffect(() => {
+    const tick = async () => {
+      if (liveBusyRef.current) return;
+      const instances = [...instancesRef.current.values()];
+      try {
+        const live = await buildLiveNetlist(instances);
+        if (!live || live.probes.length === 0) return;
+        liveBusyRef.current = true;
+        liveProbesRef.current = live.probes;
+        ensureWorker().postMessage({
+          type: 'run',
+          netlist: live.netlist,
+          tag: 'live',
+        } satisfies SpiceRequest);
+      } catch {
+        liveBusyRef.current = false; // malformed circuit — try again next tick
+      }
+    };
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Start a wire from the right-clicked pin with the chosen type/gauge. */
   const chooseWire = (kind: WireKind, gaugeAwg: number) => {

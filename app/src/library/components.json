@@ -154,6 +154,60 @@
       }
     },
     {
+      "id": "meter-voltmeter",
+      "name": "Voltmeter",
+      "category": "Meters",
+      "type": "meter",
+      "description": "Digital panel voltmeter with a red 7-segment readout, updated live by the background solver. 10Meg input impedance, so it barely loads the circuit.",
+      "width": 1.6,
+      "height": 1.05,
+      "symbol": "/components/Voltmeter.svg",
+      "pins": [
+        { "number": "+", "name": "V_PLUS", "svgId": "pin-p", "terminal": "P" },
+        { "number": "-", "name": "V_MINUS", "svgId": "pin-n", "terminal": "N" }
+      ],
+      "properties": {
+        "meterType": "voltmeter",
+        "unit": "V"
+      },
+      "spice": {
+        "file": "Voltmeter.inc",
+        "subckt": "VOLTMETER",
+        "ports": ["P", "N"],
+        "instances": [
+          { "suffix": "", "portToPin": { "P": "+", "N": "-" } }
+        ],
+        "notes": "10Meg across P-N; the reading is v(P)-v(N) from the solved node voltages."
+      }
+    },
+    {
+      "id": "meter-ammeter",
+      "name": "Ammeter",
+      "category": "Meters",
+      "type": "meter",
+      "description": "Digital panel ammeter with a red 7-segment readout, updated live by the background solver. Wire it in series; internally it's a 0V SPICE source (the standard current probe).",
+      "width": 1.6,
+      "height": 1.05,
+      "symbol": "/components/Ammeter.svg",
+      "pins": [
+        { "number": "+", "name": "A_IN", "svgId": "pin-p", "terminal": "P" },
+        { "number": "-", "name": "A_OUT", "svgId": "pin-n", "terminal": "N" }
+      ],
+      "properties": {
+        "meterType": "ammeter",
+        "unit": "A"
+      },
+      "spice": {
+        "file": "Ammeter.inc",
+        "subckt": "AMMETER",
+        "ports": ["P", "N"],
+        "instances": [
+          { "suffix": "", "portToPin": { "P": "+", "N": "-" } }
+        ],
+        "notes": "0V source in series; the reading is the branch-current vector i(v.x<refdes>.vam)."
+      }
+    },
+    {
       "id": "tube-5u4g",
       "name": "5U4G",
       "category": "Rectifier Tubes",

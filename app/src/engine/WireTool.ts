@@ -1,7 +1,8 @@
 import type { FederatedPointerEvent } from 'pixi.js';
 import { PlacedWire } from './PlacedWire';
+import { Wire } from './Wire';
+import { SchematicComponent, type Pin } from './Component';
 import type { Viewport } from './Viewport';
-import type { Pin } from './Component';
 import type { PlacedComponent } from './PlacedComponent';
 import type { ComponentModel } from '../library';
 import { DEFAULT_WIRE_GAUGE_AWG, DEFAULT_WIRE_KIND, type WireKind } from './wireGauges';
@@ -131,11 +132,36 @@ export class WireTool {
     if (which === 1) this.fromComponent?.refreshPins();
   }
 
-  /** Merge two pins onto the same net (existing net wins; else mint a new one). */
+  /**
+   * Merge two pins onto the same net. When both pins already belong to
+   * different nets, the merge must propagate: every pin and wire in the
+   * whole circuit carrying the obsolete net is renamed onto the surviving
+   * one — otherwise previously-joined connections silently break apart.
+   */
   private mergeNets(a: Pin, b: Pin): string {
     const net = a.net ?? b.net ?? `N${++this.netCounter}`;
+    const obsolete = new Set(
+      [a.net, b.net].filter((n): n is string => n !== null && n !== net),
+    );
     a.net = net;
     b.net = net;
+
+    if (obsolete.size > 0) {
+      for (const child of this.viewport.world.children) {
+        if (child instanceof SchematicComponent) {
+          let touched = false;
+          for (const pin of child.pins) {
+            if (pin.net && obsolete.has(pin.net)) {
+              pin.net = net;
+              touched = true;
+            }
+          }
+          if (touched) child.refreshPins();
+        } else if (child instanceof Wire && child.net && obsolete.has(child.net)) {
+          child.net = net;
+        }
+      }
+    }
     return net;
   }
 

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 60">
+  <!--
+    Metal film resistor, 0.5W: pastel mint-green cylindrical body with
+    bright tinned axial leads, matching the reference photo (5-band
+    metal-film resistors — pale green epoxy coating is characteristic of
+    this construction, vs. the darker brown of carbon-comp). Body drawn
+    as a capsule using cubic-bezier rounded ends (no SVG arc commands —
+    @pixi-essentials/svg mis-renders elliptic arcs). Pins carry
+    id="pin-1"/"pin-2" — wire attachment points referenced by
+    components.json -> pins[].svgId.
+
+    Same footprint as CC-0.5W: 1.5in pin-to-pin (0.5in body + 0.5in
+    leads each side) once scaled to its 0.15in declared height — see
+    passiveValues.ts RESISTOR_SYMBOL_BY_TYPE_AND_POWER.
+  -->
+
+  <!-- Leads -->
+  <line x1="0" y1="30" x2="200" y2="30" stroke="#C7CCD1" stroke-width="3" />
+  <line x1="400" y1="30" x2="600" y2="30" stroke="#C7CCD1" stroke-width="3" />
+
+  <!-- Body: pastel green metal-film cylinder, straight vertical sides -->
+  <path
+       d="M 203 12
+       L 397 12
+       C 398.35 12 400 13.65 400 15
+       L 400 45
+       C 400 46.35 398.35 48 397 48
+       L 203 48
+       C 201.65 48 200 46.35 200 45
+       L 200 15
+       C 200 13.65 201.65 12 203 12
+       Z"
+       fill="#9CC98D" stroke="#4E7A45" stroke-width="3" />
+  <!-- gloss highlight -->
+  <path d="M 214 18 L 386 18" stroke="#C3E2B6" stroke-width="3" stroke-linecap="round" />
+
+  <!-- Color bands: digit-1, digit-2, multiplier, tolerance — recolored
+       per-instance from the resistor's value (see colorCode.ts) -->
+  <rect id="band-1" x="256.36" y="13" width="10.91" height="34" fill="#7B3F00" />
+  <rect id="band-2" x="281.81" y="13" width="10.91" height="34" fill="#1A1A1A" />
+  <rect id="band-3" x="307.26" y="13" width="10.91" height="34" fill="#E8D63A" />
+  <rect id="band-4" x="332.71" y="13" width="10.91" height="34" fill="#C0C0C0" />
+
+  <!-- Pins: bright tinned/silver leads, brighter than the darker carbon-comp pins -->
+  <circle id="pin-1" cx="0" cy="30" r="6.75" fill="#D5D9DC" stroke="#8B9198" stroke-width="1.5" />
+  <circle cx="1.27" cy="28.73" r="2.4" fill="#F2F4F5" stroke="none" />
+  <circle id="pin-2" cx="600" cy="30" r="6.75" fill="#D5D9DC" stroke="#8B9198" stroke-width="1.5" />
+  <circle cx="598.73" cy="28.73" r="2.4" fill="#F2F4F5" stroke="none" />
+</svg>

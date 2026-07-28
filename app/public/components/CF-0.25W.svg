@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 50">
+  <!--
+    Carbon film resistor, 0.25W: tan/peach cylindrical body with a thin
+    gold shoulder ring at each end (where the body meets the lead) and
+    bright tinned axial leads, matching the reference photo. Body drawn
+    as a capsule using cubic-bezier rounded ends (no SVG arc commands —
+    @pixi-essentials/svg mis-renders elliptic arcs). Pins carry
+    id="pin-1"/"pin-2" — wire attachment points referenced by
+    components.json -> pins[].svgId.
+
+    Same footprint as CC-0.25W: 1.35in pin-to-pin (0.25in body + 0.5in
+    leads each side) once scaled to its 0.125in declared height — see
+    passiveValues.ts RESISTOR_SYMBOL_BY_TYPE_AND_POWER.
+  -->
+
+  <!-- Leads -->
+  <line x1="0" y1="25" x2="200" y2="25" stroke="#B7BCC2" stroke-width="2.5" />
+  <line x1="340" y1="25" x2="540" y2="25" stroke="#B7BCC2" stroke-width="2.5" />
+
+  <!-- Body: tan carbon-film cylinder, straight vertical sides -->
+  <path
+       d="M 202.5 10
+       L 337.5 10
+       C 338.63 10 340 11.37 340 12.5
+       L 340 37.5
+       C 340 38.63 338.63 40 337.5 40
+       L 202.5 40
+       C 201.37 40 200 38.63 200 37.5
+       L 200 12.5
+       C 200 11.37 201.37 10 202.5 10
+       Z"
+       fill="#E8C39A" stroke="#8A5A2E" stroke-width="2.5" />
+
+  <!-- Gold shoulder rings where the body meets each lead -->
+  <rect x="204" y="10" width="3.5" height="30" fill="#D9A441" />
+  <rect x="332.5" y="10" width="3.5" height="30" fill="#D9A441" />
+
+  <!-- Color bands: digit-1, digit-2, multiplier, tolerance — recolored
+       per-instance from the resistor's value (see colorCode.ts) -->
+  <rect id="band-1" x="239.45" y="11" width="7.64" height="28" fill="#7B3F00" />
+  <rect id="band-2" x="257.27" y="11" width="7.64" height="28" fill="#1A1A1A" />
+  <rect id="band-3" x="275.09" y="11" width="7.64" height="28" fill="#E8D63A" />
+  <rect id="band-4" x="292.91" y="11" width="7.64" height="28" fill="#C0C0C0" />
+
+  <!-- Pins -->
+  <circle id="pin-1" cx="0" cy="25" r="5.63" fill="#D5D9DC" stroke="#8B9198" stroke-width="1.25" />
+  <circle cx="1.06" cy="23.94" r="2" fill="#F2F4F5" stroke="none" />
+  <circle id="pin-2" cx="540" cy="25" r="5.63" fill="#D5D9DC" stroke="#8B9198" stroke-width="1.25" />
+  <circle cx="538.94" cy="23.94" r="2" fill="#F2F4F5" stroke="none" />
+</svg>

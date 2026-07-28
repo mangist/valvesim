@@ -308,9 +308,24 @@ function TypeIcon({ type }: { type: string }) {
     case 'resistor':
     case 'capacitor':
       return <RectangleIcon />;
+    case 'meter':
+      return <MeterIcon />;
     default:
       return null;
   }
+}
+
+/** Small digital panel-meter glyph: bezel with red 7-seg-style dashes. */
+function MeterIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      <rect x="1.5" y="4" width="17" height="10" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="5" y1="9" x2="8" y2="9" stroke="#ff3b2b" strokeWidth="2" />
+      <line x1="10" y1="9" x2="13" y2="9" stroke="#ff3b2b" strokeWidth="2" />
+      <line x1="6" y1="14" x2="6" y2="17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="14" y1="14" x2="14" y2="17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 /** Generic leaded-part glyph: placeholder rectangle body with two leads. */

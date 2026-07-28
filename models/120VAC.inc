@@ -12,3 +12,14 @@ VAC L N SIN(0 169.7 60)
 RPE PE 0 10m
 RNGND N 0 10Meg
 .ENDS
+*
+* Rocker switch OFF: same topology, but the line is open — L floats
+* behind a large resistance instead of the mains source, so downstream
+* circuitry sees a dead (but numerically well-behaved) input.
+*
+.SUBCKT 120VAC_OFF L N PE
+ROPEN L N 100Meg
+RPE PE 0 10m
+RNGND N 0 10Meg
+RLGND L 0 10Meg
+.ENDS

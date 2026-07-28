@@ -22,7 +22,7 @@ export interface CapacitorSubcategory {
   values: Array<{
     capacitance: number;
     voltageRating: number;
-    orientation: 'axial' | 'radial' | 'film';
+    orientation: 'axial' | 'radial' | 'film' | 'disc';
   }>;
 }
 
@@ -53,16 +53,16 @@ export const CAPACITOR_SUBCATEGORIES: CapacitorSubcategory[] = [
     key: 'ceramic',
     label: 'Ceramic',
     values: [
-      { capacitance: 100e-12, voltageRating: 500, orientation: 'radial' },
-      { capacitance: 220e-12, voltageRating: 500, orientation: 'radial' },
-      { capacitance: 470e-12, voltageRating: 500, orientation: 'radial' },
-      { capacitance: 1e-9, voltageRating: 500, orientation: 'radial' },
-      { capacitance: 2.2e-9, voltageRating: 500, orientation: 'radial' },
-      { capacitance: 4.7e-9, voltageRating: 500, orientation: 'radial' },
-      { capacitance: 10e-9, voltageRating: 50, orientation: 'radial' },
-      { capacitance: 22e-9, voltageRating: 50, orientation: 'radial' },
-      { capacitance: 47e-9, voltageRating: 50, orientation: 'radial' },
-      { capacitance: 100e-9, voltageRating: 50, orientation: 'radial' },
+      { capacitance: 100e-12, voltageRating: 500, orientation: 'disc' },
+      { capacitance: 220e-12, voltageRating: 500, orientation: 'disc' },
+      { capacitance: 470e-12, voltageRating: 500, orientation: 'disc' },
+      { capacitance: 1e-9, voltageRating: 500, orientation: 'disc' },
+      { capacitance: 2.2e-9, voltageRating: 500, orientation: 'disc' },
+      { capacitance: 4.7e-9, voltageRating: 500, orientation: 'disc' },
+      { capacitance: 10e-9, voltageRating: 50, orientation: 'disc' },
+      { capacitance: 22e-9, voltageRating: 50, orientation: 'disc' },
+      { capacitance: 47e-9, voltageRating: 50, orientation: 'disc' },
+      { capacitance: 100e-9, voltageRating: 50, orientation: 'disc' },
     ],
   },
   {
@@ -159,9 +159,10 @@ function buildCapacitorDefinitions(): CapacitorDefinition[] {
     sub.values.map(({ capacitance, voltageRating, orientation }): CapacitorDefinition => {
       const capLabel = formatEng(capacitance, 'F');
       const SYMBOL_BY_ORIENTATION: Record<string, { symbol: string; width: number; height: number }> = {
-        axial: { symbol: '/components/capacitor-axial.svg', width: 1.1, height: 0.5 },
+        axial: { symbol: '/components/capacitor-axial.svg', width: 3.0, height: 0.5 }, // 1in body + 1in leads each side
         radial: { symbol: '/components/capacitor-radial.svg', width: 0.4, height: 0.75 },
         film: { symbol: '/components/capacitor-film.svg', width: 0.7, height: 0.8 },
+        disc: { symbol: '/components/capacitor-ceramic.svg', width: 0.55, height: 0.8 }, // ~0.4in orange disc + long leads
       };
       const art = SYMBOL_BY_ORIENTATION[orientation];
       return {
@@ -180,18 +181,46 @@ function buildCapacitorDefinitions(): CapacitorDefinition[] {
   );
 }
 
-/** Reference art for carbon-comp resistors, keyed by power rating (watts). */
-const CARBON_COMP_SYMBOL: Record<number, { symbol: string; width: number; height: number }> = {
-  0.5: { symbol: '/components/CC-0.5W.svg', width: 0.9, height: 0.14 },
-  1: { symbol: '/components/CC-1W.svg', width: 1.1, height: 0.19 },
-  2: { symbol: '/components/CC-2W.svg', width: 1.3, height: 0.26 },
+type ResistorArt = { symbol: string; width: number; height: number };
+
+/**
+ * Reference art for resistors, keyed by power rating (watts) and shared
+ * across every subcategory by default — package size tracks dissipation,
+ * not the resistive element's construction, so most resistorTypes at a
+ * given wattage share a body. `width`/`height` are the true rendered
+ * pin-to-pin size and body diameter in inches (body + leads each side);
+ * all bodies carry color-code bands (see colorCode.ts), recolored
+ * per-instance from the resistor's value.
+ */
+const RESISTOR_SYMBOL_BY_POWER: Record<number, ResistorArt> = {
+  0.25: { symbol: '/components/CC-0.25W.svg', width: 1.35, height: 0.125 }, // 0.25in body + 0.5in leads
+  0.5: { symbol: '/components/CC-0.5W.svg', width: 1.5, height: 0.15 }, // 0.5in body + 0.5in leads
+  1: { symbol: '/components/CC-1W.svg', width: 1.75, height: 0.2 }, // 0.75in body + 0.5in leads
+  2: { symbol: '/components/CC-2W.svg', width: 2.0, height: 0.25 }, // 1in body + 0.5in leads
+  5: { symbol: '/components/WW-5W.svg', width: 4.0, height: 0.7 }, // 2in body + 1in leads (wirewound, chunky)
+  10: { symbol: '/components/WW-10W.svg', width: 4.5, height: 0.85 }, // 2.5in body + 1in leads (wirewound, chunky)
+};
+
+/**
+ * Per-resistorType overrides, at matching footprints to the shared table
+ * above — each construction has a visually distinct reference photo:
+ * carbon-film is tan with gold shoulder rings, metal-film is pastel green.
+ */
+const RESISTOR_SYMBOL_OVERRIDE_BY_TYPE: Record<string, Record<number, ResistorArt>> = {
+  'carbon-film': {
+    0.25: { symbol: '/components/CF-0.25W.svg', width: 1.35, height: 0.125 },
+  },
+  'metal-film': {
+    0.5: { symbol: '/components/MF-0.5W.svg', width: 1.5, height: 0.15 },
+  },
 };
 
 function buildResistorDefinitions(): ResistorDefinition[] {
   return RESISTOR_SUBCATEGORIES.flatMap((sub) =>
     sub.values.map(({ resistance, powerRating }): ResistorDefinition => {
       const resLabel = formatEng(resistance, 'Ω');
-      const art = sub.key === 'carbon-comp' ? CARBON_COMP_SYMBOL[powerRating] : undefined;
+      const art =
+        RESISTOR_SYMBOL_OVERRIDE_BY_TYPE[sub.key]?.[powerRating] ?? RESISTOR_SYMBOL_BY_POWER[powerRating];
       return {
         id: `resistor-${sub.key}-${idSafe(resLabel)}-${powerRating}w`,
         name: `${resLabel} ${powerRating}W`,

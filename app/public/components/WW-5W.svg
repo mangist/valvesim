@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 280">
+  <!--
+    Wirewound power resistor, 5W: chunky cream/vitreous-enamel cylindrical
+    body (distinct from the carbon-comp brown, and noticeably thicker in
+    proportion than the small-signal resistors) with axial leads. Body
+    drawn as a capsule using cubic-bezier rounded ends (no SVG arc
+    commands — @pixi-essentials/svg mis-renders elliptic arcs). Pins carry
+    id="pin-1"/"pin-2" — wire attachment points referenced by
+    components.json -> pins[].svgId.
+
+    Sized so the rendered part is exactly 4in pin-to-pin (2in body + 1in
+    leads each side) once scaled to its 0.7in declared height — see
+    passiveValues.ts RESISTOR_SYMBOL_BY_POWER.
+  -->
+
+  <!-- Leads -->
+  <line x1="0" y1="140" x2="400" y2="140" stroke="#9AA0A8" stroke-width="14" />
+  <line x1="1200" y1="140" x2="1600" y2="140" stroke="#9AA0A8" stroke-width="14" />
+
+  <!-- Body: cream vitreous-enamel cylinder, straight vertical sides -->
+  <path
+       d="M 414 56
+       L 1186 56
+       C 1192.3 56 1200 63.7 1200 70
+       L 1200 210
+       C 1200 216.3 1192.3 224 1186 224
+       L 414 224
+       C 407.7 224 400 216.3 400 210
+       L 400 70
+       C 400 63.7 407.7 56 414 56
+       Z"
+       fill="#E7DFC6" stroke="#8A8161" stroke-width="14" />
+
+  <!-- Color bands: digit-1, digit-2, multiplier, tolerance — recolored
+       per-instance from the resistor's value (see colorCode.ts) -->
+  <rect id="band-1" x="625.45" y="57" width="43.64" height="166" fill="#7B3F00" />
+  <rect id="band-2" x="727.27" y="57" width="43.64" height="166" fill="#1A1A1A" />
+  <rect id="band-3" x="829.09" y="57" width="43.64" height="166" fill="#E8D63A" />
+  <rect id="band-4" x="930.91" y="57" width="43.64" height="166" fill="#C0C0C0" />
+
+  <!-- Pins -->
+  <circle id="pin-1" cx="0" cy="140" r="31.5" fill="#B9BEC7" stroke="#6E747E" stroke-width="7" />
+  <circle cx="5.95" cy="134.05" r="11.2" fill="#E6E9EE" stroke="none" />
+  <circle id="pin-2" cx="1600" cy="140" r="31.5" fill="#B9BEC7" stroke="#6E747E" stroke-width="7" />
+  <circle cx="1594.05" cy="134.05" r="11.2" fill="#E6E9EE" stroke="none" />
+</svg>

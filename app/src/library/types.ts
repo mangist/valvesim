@@ -20,6 +20,7 @@ export enum ComponentType {
   Jack = 'jack',
   AcInlet = 'ac-inlet',
   Ground = 'ground',
+  Meter = 'meter',
 }
 
 /**
@@ -73,7 +74,7 @@ export interface CapacitorProperties {
   /** Construction/subcategory, e.g. "electrolytic", "ceramic", "polyester-film". */
   dielectric?: string;
   /** Lead style: both leads from one end/side ("radial") or one from each end ("axial"). */
-  orientation?: 'axial' | 'radial' | 'film';
+  orientation?: 'axial' | 'radial' | 'film' | 'disc';
 }
 
 export interface InductorProperties {
@@ -170,6 +171,12 @@ export interface GroundProperties {
   groundType?: 'chassis' | 'earth';
 }
 
+export interface MeterProperties {
+  meterType: 'voltmeter' | 'ammeter';
+  /** Base display unit; readings auto-range (A → mA) on the 7-seg face. */
+  unit?: 'V' | 'A';
+}
+
 // ---------- SPICE binding ----------
 
 /**
@@ -239,6 +246,7 @@ export type SwitchDefinition = BaseDefinition<ComponentType.Switch, SwitchProper
 export type JackDefinition = BaseDefinition<ComponentType.Jack, JackProperties>;
 export type AcInletDefinition = BaseDefinition<ComponentType.AcInlet, AcInletProperties>;
 export type GroundDefinition = BaseDefinition<ComponentType.Ground, GroundProperties>;
+export type MeterDefinition = BaseDefinition<ComponentType.Meter, MeterProperties>;
 
 export type ComponentDefinition =
   | WireDefinition
@@ -252,7 +260,8 @@ export type ComponentDefinition =
   | SwitchDefinition
   | JackDefinition
   | AcInletDefinition
-  | GroundDefinition;
+  | GroundDefinition
+  | MeterDefinition;
 
 // ---------- helpers ----------
 

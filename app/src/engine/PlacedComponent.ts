@@ -1,10 +1,13 @@
 import { Circle, Graphics, Text, type FederatedPointerEvent } from 'pixi.js';
 import { SchematicComponent } from './Component';
 import { PIXELS_PER_INCH } from './units';
+import { SevenSegDisplay, formatMeterReading } from './SevenSegDisplay';
 import {
   ComponentType,
   formatEng,
   potentiometerTaperFraction,
+  type CapacitorProperties,
+  type MeterProperties,
   type PotentiometerProperties,
   type ResistorProperties,
 } from '../library/types';
@@ -35,6 +38,7 @@ export const REFDES_PREFIX: Record<string, string> = {
   [ComponentType.SolderLugStrip]: 'TS',
   [ComponentType.AcInlet]: 'AC',
   [ComponentType.Ground]: 'GND',
+  [ComponentType.Meter]: 'M',
 };
 
 /**
@@ -63,6 +67,16 @@ export class PlacedComponent extends SchematicComponent {
   private wiperRadius = 34;
   private wiperDragging = false;
 
+  /** AC-inlet-only: clickable power rocker overlay. */
+  private switchView: Graphics | null = null;
+  private switchRect = { x: 0, y: 0, w: 0, h: 0 };
+
+  /** 7-seg readout: meter face, or the inlet's current-draw display. */
+  private meterDisplay: SevenSegDisplay | null = null;
+
+  /** Invoked when the power rocker is toggled (App shows a status update). */
+  onSwitchToggle?: (component: PlacedComponent, on: boolean) => void;
+
   constructor(model: ComponentModel, refDes: string, guid: string = crypto.randomUUID()) {
     super(refDes);
     this.model = model;
@@ -87,6 +101,24 @@ export class PlacedComponent extends SchematicComponent {
   setWiperPosition(position: number): void {
     this.params.wiperPosition = clamp01(position);
     this.drawWiper();
+  }
+
+  /** AC inlet rocker state — defaults to ON. Persists as a user param (0/1). */
+  get switchOn(): boolean {
+    const stored = this.params.switchOn;
+    if (typeof stored === 'number') return stored !== 0;
+    return true;
+  }
+
+  setSwitchOn(on: boolean): void {
+    this.params.switchOn = on ? 1 : 0;
+    this.drawPowerSwitch();
+    // the current-draw readout only shows while power is on
+    if (this.model.type === ComponentType.AcInlet && this.meterDisplay) {
+      this.meterDisplay.visible = on;
+      if (on) this.setMeterValue(0);
+    }
+    this.onSwitchToggle?.(this, on);
   }
 
   get label(): string {
@@ -150,8 +182,132 @@ export class PlacedComponent extends SchematicComponent {
     if (this.model.type === ComponentType.Potentiometer) {
       this.buildWiper(svgRoot);
     }
+    if (this.model.type === ComponentType.AcInlet) {
+      this.buildPowerSwitch(svgRoot);
+      this.buildInletMeter(b);
+    }
+    if (this.model.type === ComponentType.Meter) {
+      this.buildMeterFace(svgRoot);
+    }
 
     this.buildLabel(b);
+  }
+
+  /** Base unit for this instance's readout ('A' for the inlet's draw display). */
+  private get meterBaseUnit(): 'A' | 'V' {
+    if (this.model.type === ComponentType.Meter) {
+      return (this.model.properties as MeterProperties).meterType === 'voltmeter' ? 'V' : 'A';
+    }
+    return 'A';
+  }
+
+  /** Push a measured value (RMS volts/amps) onto the 7-seg readout. */
+  setMeterValue(value: number): void {
+    if (!this.meterDisplay) return;
+    const { text, unit } = formatMeterReading(value, this.meterBaseUnit);
+    this.meterDisplay.setText(text);
+    this.meterDisplay.setUnit(unit);
+  }
+
+  /** Digital current-draw readout hung under the AC inlet (visible when ON). */
+  private buildInletMeter(b: { x: number; y: number; width: number; height: number }): void {
+    this.meterDisplay?.destroy();
+    const display = new SevenSegDisplay(56, 'A');
+    const targetW = b.width * 0.62;
+    const s = targetW / display.panelWidth;
+    display.scale.set(s);
+    display.position.set(b.x + (b.width - display.panelWidth * s) / 2, b.y + b.height + 12);
+    display.visible = this.switchOn;
+    this.meterDisplay = display;
+    this.addChild(display);
+    this.setMeterValue(0);
+  }
+
+  /** Fit the 7-seg readout into the meter face's id="meter-display" window. */
+  private buildMeterFace(svgRoot: SVGSVGElement | null): void {
+    const marker = svgRoot?.querySelector('#meter-display');
+    if (!marker) return;
+    const mx = Number(marker.getAttribute('x') ?? 0);
+    const my = Number(marker.getAttribute('y') ?? 0);
+    const mw = Number(marker.getAttribute('width') ?? 0);
+    const mh = Number(marker.getAttribute('height') ?? 0);
+
+    this.meterDisplay?.destroy();
+    const display = new SevenSegDisplay(56, this.meterBaseUnit);
+    const s = Math.min((mw * 0.94) / display.panelWidth, (mh * 0.9) / display.panelHeight);
+    display.scale.set(s);
+    display.position.set(
+      mx + (mw - display.panelWidth * s) / 2,
+      my + (mh - display.panelHeight * s) / 2,
+    );
+    this.meterDisplay = display;
+    this.addChild(display);
+    this.setMeterValue(0);
+  }
+
+  /**
+   * The rocker button is drawn live (not baked into the SVG) so it can be
+   * clicked to toggle power. Its geometry comes from the symbol's
+   * invisible id="switch-rocker" marker rect.
+   */
+  private buildPowerSwitch(svgRoot: SVGSVGElement | null): void {
+    const marker = svgRoot?.querySelector('#switch-rocker');
+    if (!marker) return;
+    this.switchRect = {
+      x: Number(marker.getAttribute('x') ?? 0),
+      y: Number(marker.getAttribute('y') ?? 0),
+      w: Number(marker.getAttribute('width') ?? 0),
+      h: Number(marker.getAttribute('height') ?? 0),
+    };
+
+    this.switchView?.destroy();
+    const view = new Graphics();
+    view.eventMode = 'static';
+    view.cursor = 'pointer';
+    view.on('pointerdown', (e: FederatedPointerEvent) => {
+      e.stopPropagation(); // clicking the rocker never drags the component
+    });
+    view.on('pointertap', () => {
+      this.setSwitchOn(!this.switchOn);
+    });
+    this.switchView = view;
+    this.addChild(view);
+    this.drawPowerSwitch();
+  }
+
+  /** Redraw the rocker in its current state (illuminated red = ON). */
+  private drawPowerSwitch(): void {
+    if (!this.switchView) return;
+    const { x, y, w, h } = this.switchRect;
+    const on = this.switchOn;
+    const g = this.switchView;
+    const midY = y + h / 2;
+    const cx = x + w / 2;
+
+    g.clear();
+    // amber power-glow halo around the illuminated rocker
+    if (on) {
+      g.roundRect(x - 4, y - 4, w + 8, h + 8, 12).stroke({ color: 0xff9f1c, width: 2.5 });
+    }
+    // rocker base: bright illuminated red when ON, dark dead red when OFF
+    g.roundRect(x, y, w, h, 9)
+      .fill(on ? 0xd6362a : 0x631812)
+      .stroke({ color: 0x7a1f18, width: 2.5 });
+    // pressed-in half: the active side sits deeper (I-side when ON, O-side when OFF)
+    if (on) {
+      g.roundRect(x + 5, y + 5, w - 10, h / 2 - 8, 6).fill(0xa8241a);
+    } else {
+      g.roundRect(x + 5, midY + 3, w - 10, h / 2 - 8, 6).fill(0x3f0f0a);
+    }
+    // seesaw hinge
+    g.moveTo(x, midY).lineTo(x + w, midY).stroke({ color: 0x7a1f18, width: 1.5 });
+    // "I" dash (IEC 60417-5007), upper half — lit when ON
+    g.moveTo(cx - 8, y + h / 4)
+      .lineTo(cx + 8, y + h / 4)
+      .stroke({ color: on ? 0xffe9c9 : 0x9a6b60, width: 4, cap: 'round' });
+    // "O" circle (IEC 60417-5008), lower half — prominent when OFF
+    g.circle(cx, y + (3 * h) / 4, 9).stroke({ color: on ? 0x9a6b60 : 0xedede6, width: 3.5 });
+
   }
 
   /** Read the pivot/radius from the symbol and add the draggable wiper dot. */
@@ -298,6 +454,7 @@ export class PlacedComponent extends SchematicComponent {
     label: string;
     x: number;
     y: number;
+    params: Record<string, string | number>;
     pins: Array<{ id: string; net: string | null }>;
   } {
     return {
@@ -307,20 +464,63 @@ export class PlacedComponent extends SchematicComponent {
       label: this.labelValue,
       x: this.x,
       y: this.y,
+      params: this.params,
       pins: this.pins.map((p) => ({ id: p.id, net: p.net })),
     };
+  }
+
+  /** R/C primitive card from catalog properties (passives have no subckt). */
+  private passiveSpice(): string {
+    const netFor = (pinNumber: string): string | undefined =>
+      this.pins.find((p) => p.id === pinNumber)?.net ?? undefined;
+    const n1 = netFor('1');
+    const n2 = netFor('2');
+    if (!n1 || !n2) {
+      return `* ${this.refDes} (${this.model.name}) not fully wired`;
+    }
+    // refDes already carries the element letter (R1, C3, …)
+    if (this.model.type === ComponentType.Resistor) {
+      const { resistance } = this.model.properties as ResistorProperties;
+      return `${this.refDes} ${n1} ${n2} ${formatEng(resistance)}`;
+    }
+    const { capacitance } = this.model.properties as CapacitorProperties;
+    return `${this.refDes} ${n1} ${n2} ${formatEng(capacitance)}`;
   }
 
   toSpice(): string {
     if (this.model.type === ComponentType.Potentiometer) {
       return this.potentiometerSpice();
     }
-    const pinNets: Record<string, string> = {};
-    for (const p of this.pins) {
-      if (p.net) pinNets[p.id] = p.net;
+    if (
+      this.model.type === ComponentType.Resistor ||
+      this.model.type === ComponentType.Capacitor
+    ) {
+      return this.passiveSpice();
     }
+    // Unwired pins get unique dangling nets rather than blocking the whole
+    // card — a partially-wired inlet/tube still participates in the live
+    // solve (e.g. PE left floating). Each dangling net is tied to ground
+    // through 1G so the solver always has a DC path.
+    const pinNets: Record<string, string> = {};
+    const danglers: string[] = [];
+    this.pins.forEach((p, i) => {
+      if (p.net) {
+        pinNets[p.id] = p.net;
+      } else {
+        const net = `nc${i}_${this.refDes.toLowerCase()}`;
+        pinNets[p.id] = net;
+        danglers.push(net);
+      }
+    });
     try {
-      return this.model.toSpiceInstances(this.refDes, pinNets).join('\n');
+      let cards = this.model.toSpiceInstances(this.refDes, pinNets);
+      // AC inlet with the rocker off: swap in the dead-input subckt variant
+      // (the subckt name is the last token of an X-instance card).
+      if (this.model.type === ComponentType.AcInlet && !this.switchOn) {
+        cards = cards.map((card) => `${card}_OFF`);
+      }
+      cards.push(...danglers.map((net, i) => `RNC${i}${this.refDes} ${net} 0 1G`));
+      return cards.join('\n');
     } catch {
       return `* ${this.refDes} (${this.model.name}) not fully wired`;
     }
