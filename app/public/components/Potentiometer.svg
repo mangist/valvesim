@@ -11,8 +11,16 @@
     fill-opacity/stroke-opacity/opacity.
   -->
 
+  <!--
+    Rounded corners below are authored as paths with quadratic-Bezier (Q)
+    corners rather than <rect rx> — the canvas SVG parser converts rect
+    corner radii to elliptical arcs via a buggy code path that visibly
+    distorts the shape once rendered on the Pixi canvas.
+  -->
+
   <!-- ==================== shaft ==================== -->
-  <rect x="103" y="18" width="34" height="78" rx="14" fill="#E8DFC0" stroke="#9A9370" stroke-width="2.5" />
+  <path d="M117,18 L123,18 Q137,18 137,32 L137,96 L103,96 L103,32 Q103,18 117,18 Z"
+    fill="#E8DFC0" stroke="#9A9370" stroke-width="2.5" />
 
   <!-- ==================== knurled bushing ==================== -->
   <circle cx="120" cy="112" r="44" fill="#2A2C34" stroke="#6E747E" stroke-width="2.5" />
@@ -42,7 +50,8 @@
   <circle id="wiper-pivot" cx="120" cy="108" r="0" data-radius="34" />
 
   <!-- ==================== PCB body ==================== -->
-  <rect x="42" y="150" width="156" height="118" rx="6" fill="#23252C" stroke="#CDD6D2" stroke-width="3.5" />
+  <path d="M48,150 L192,150 Q198,150 198,156 L198,262 Q198,268 192,268 L48,268 Q42,268 42,262 L42,156 Q42,150 48,150 Z"
+    fill="#23252C" stroke="#CDD6D2" stroke-width="3.5" />
   <!-- copper via -->
   <circle cx="60" cy="176" r="5" fill="#B5651D" stroke="#5A2E0D" stroke-width="1.5" />
 
