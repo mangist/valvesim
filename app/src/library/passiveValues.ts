@@ -19,7 +19,11 @@ const TWO_LEAD_PINS: PinDefinition[] = [
 export interface CapacitorSubcategory {
   key: string; // dielectric
   label: string;
-  values: Array<{ capacitance: number; voltageRating: number; orientation: 'axial' | 'radial' }>;
+  values: Array<{
+    capacitance: number;
+    voltageRating: number;
+    orientation: 'axial' | 'radial' | 'film';
+  }>;
 }
 
 export interface ResistorSubcategory {
@@ -65,16 +69,16 @@ export const CAPACITOR_SUBCATEGORIES: CapacitorSubcategory[] = [
     key: 'polyester-film',
     label: 'Polyester Film',
     values: [
-      { capacitance: 1e-9, voltageRating: 600, orientation: 'radial' },
-      { capacitance: 2.2e-9, voltageRating: 600, orientation: 'radial' },
-      { capacitance: 4.7e-9, voltageRating: 600, orientation: 'radial' },
-      { capacitance: 10e-9, voltageRating: 600, orientation: 'radial' },
-      { capacitance: 22e-9, voltageRating: 600, orientation: 'radial' },
-      { capacitance: 33e-9, voltageRating: 400, orientation: 'radial' },
-      { capacitance: 47e-9, voltageRating: 400, orientation: 'radial' },
-      { capacitance: 100e-9, voltageRating: 400, orientation: 'radial' },
-      { capacitance: 220e-9, voltageRating: 400, orientation: 'radial' },
-      { capacitance: 470e-9, voltageRating: 200, orientation: 'radial' },
+      { capacitance: 1e-9, voltageRating: 600, orientation: 'film' },
+      { capacitance: 2.2e-9, voltageRating: 600, orientation: 'film' },
+      { capacitance: 4.7e-9, voltageRating: 600, orientation: 'film' },
+      { capacitance: 10e-9, voltageRating: 600, orientation: 'film' },
+      { capacitance: 22e-9, voltageRating: 600, orientation: 'film' },
+      { capacitance: 33e-9, voltageRating: 400, orientation: 'film' },
+      { capacitance: 47e-9, voltageRating: 400, orientation: 'film' },
+      { capacitance: 100e-9, voltageRating: 400, orientation: 'film' },
+      { capacitance: 220e-9, voltageRating: 400, orientation: 'film' },
+      { capacitance: 470e-9, voltageRating: 200, orientation: 'film' },
     ],
   },
 ];
@@ -154,16 +158,21 @@ function buildCapacitorDefinitions(): CapacitorDefinition[] {
   return CAPACITOR_SUBCATEGORIES.flatMap((sub) =>
     sub.values.map(({ capacitance, voltageRating, orientation }): CapacitorDefinition => {
       const capLabel = formatEng(capacitance, 'F');
-      const axial = orientation === 'axial';
+      const SYMBOL_BY_ORIENTATION: Record<string, { symbol: string; width: number; height: number }> = {
+        axial: { symbol: '/components/capacitor-axial.svg', width: 1.1, height: 0.5 },
+        radial: { symbol: '/components/capacitor-radial.svg', width: 0.4, height: 0.75 },
+        film: { symbol: '/components/capacitor-film.svg', width: 0.7, height: 0.8 },
+      };
+      const art = SYMBOL_BY_ORIENTATION[orientation];
       return {
         id: `capacitor-${sub.key}-${idSafe(capLabel)}-${voltageRating}v`,
         name: `${capLabel} ${voltageRating}V`,
         category: 'Capacitors',
         type: ComponentType.Capacitor,
         description: `${sub.label} capacitor, ${capLabel}, ${voltageRating}V rated, ${orientation} leads.`,
-        width: axial ? 1.0 : 0.4,
-        height: axial ? 0.35 : 0.75,
-        symbol: axial ? '/components/capacitor-axial.svg' : '/components/capacitor-radial.svg',
+        width: art.width,
+        height: art.height,
+        symbol: art.symbol,
         pins: TWO_LEAD_PINS,
         properties: { capacitance, voltageRating, dielectric: sub.key, orientation },
       };

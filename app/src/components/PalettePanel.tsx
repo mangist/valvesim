@@ -95,19 +95,57 @@ export function PalettePanel({ onPlace, onDragStateChange, onNewComponent }: Pal
       <div>
         <h3 className="vs-palette-category">Passive Components</h3>
         <Branch label="Capacitors" icon={<RectangleIcon />}>
-          {CAPACITOR_SUBCATEGORIES.map((sub) => (
-            <Branch key={sub.key} label={sub.label}>
-              {(capacitorsByDielectric.get(sub.key) ?? []).map((c) => (
-                <PaletteItem
-                  key={c.id}
-                  component={c}
-                  onPlace={onPlace}
-                  onDragStateChange={onDragStateChange}
-                />
-              ))}
-              <NewComponentItem onClick={() => onNewComponent?.('capacitor', sub.label)} />
-            </Branch>
-          ))}
+          {CAPACITOR_SUBCATEGORIES.map((sub) => {
+            const subItems = capacitorsByDielectric.get(sub.key) ?? [];
+            // Electrolytics span both lead styles — split into an
+            // Axial/Radial sub-menu before showing values.
+            if (sub.key === 'electrolytic') {
+              const byOrientation = groupBy(
+                subItems,
+                (c) => (c.properties as CapacitorProperties).orientation ?? 'other',
+              );
+              return (
+                <Branch key={sub.key} label={sub.label}>
+                  {(['axial', 'radial'] as const).map((orientation) => (
+                    <Branch
+                      key={orientation}
+                      label={orientation === 'axial' ? 'Axial' : 'Radial'}
+                    >
+                      {(byOrientation.get(orientation) ?? []).map((c) => (
+                        <PaletteItem
+                          key={c.id}
+                          component={c}
+                          onPlace={onPlace}
+                          onDragStateChange={onDragStateChange}
+                        />
+                      ))}
+                      <NewComponentItem
+                        onClick={() =>
+                          onNewComponent?.(
+                            'capacitor',
+                            `${sub.label} (${orientation === 'axial' ? 'Axial' : 'Radial'})`,
+                          )
+                        }
+                      />
+                    </Branch>
+                  ))}
+                </Branch>
+              );
+            }
+            return (
+              <Branch key={sub.key} label={sub.label}>
+                {subItems.map((c) => (
+                  <PaletteItem
+                    key={c.id}
+                    component={c}
+                    onPlace={onPlace}
+                    onDragStateChange={onDragStateChange}
+                  />
+                ))}
+                <NewComponentItem onClick={() => onNewComponent?.('capacitor', sub.label)} />
+              </Branch>
+            );
+          })}
         </Branch>
         <Branch label="Resistors" icon={<RectangleIcon />}>
           {RESISTOR_SUBCATEGORIES.map((sub) => (

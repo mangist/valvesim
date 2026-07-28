@@ -73,7 +73,7 @@ export interface CapacitorProperties {
   /** Construction/subcategory, e.g. "electrolytic", "ceramic", "polyester-film". */
   dielectric?: string;
   /** Lead style: both leads from one end/side ("radial") or one from each end ("axial"). */
-  orientation?: 'axial' | 'radial';
+  orientation?: 'axial' | 'radial' | 'film';
 }
 
 export interface InductorProperties {

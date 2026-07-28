@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 260">
+  <!--
+    Dipped/molded polyester-film capacitor (e.g. Cornell Dubilier 715P
+    "Orange Drop" style): horizontal orange capsule body, both leads
+    exiting the underside and bowing outward before running straight down
+    — matching the reference photo. Printed markings are abstracted as
+    generic silkscreen bars rather than reproducing a specific part's text.
+
+    NOTE: solid colors only — the canvas SVG parser ignores
+    fill-opacity/stroke-opacity/opacity.
+  -->
+
+  <!-- leads: bow outward from the body, then straight down -->
+  <g fill="none" stroke="#c9c2b4" stroke-width="5" stroke-linecap="round">
+    <path d="M 80 92 C 64 118, 54 138, 60 164 L 60 250" />
+    <path d="M 140 92 C 156 118, 166 138, 160 164 L 160 250" />
+  </g>
+
+  <!-- capsule body -->
+  <rect x="30" y="8" width="160" height="88" rx="44" fill="#D9502A" stroke="#7A2A13" stroke-width="3" />
+  <!-- crimped foil ends (darker bands near the rounded caps) -->
+  <path d="M 40 10 A 44 44 0 0 0 40 94" fill="none" stroke="#7A2A13" stroke-width="3" />
+  <path d="M 180 10 A 44 44 0 0 1 180 94" fill="none" stroke="#7A2A13" stroke-width="3" />
+  <!-- gloss highlight -->
+  <path d="M 52 22 C 80 12, 140 12, 168 22" fill="none" stroke="#F0805A" stroke-width="6" stroke-linecap="round" />
+
+  <!-- printed markings: abstracted silkscreen bars (part no. / value+date code lines) -->
+  <g fill="#3A1A0E">
+    <rect x="58" y="34" width="104" height="7" rx="2" />
+    <rect x="70" y="50" width="34" height="9" rx="2" />
+    <rect x="112" y="50" width="34" height="9" rx="2" />
+  </g>
+
+  <circle id="pin-1" cx="60" cy="250" r="0.1" fill="none" />
+  <circle id="pin-2" cx="160" cy="250" r="0.1" fill="none" />
+</svg>

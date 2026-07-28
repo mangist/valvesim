@@ -1,13 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 70">
-  <!-- Axial-lead electrolytic: leads from both ends of the can, diagonal
-       highlight + rectangular rating-band cutouts like the reference photo. -->
-  <line x1="0" y1="35" x2="40" y2="35" stroke="#c9c2b4" stroke-width="3" />
-  <line x1="180" y1="35" x2="220" y2="35" stroke="#c9c2b4" stroke-width="3" />
-  <rect x="40" y="10" width="140" height="50" rx="24" fill="#1b1b1f" stroke="#eaf2ef" stroke-width="2" />
-  <path d="M 60 16 L 148 54" stroke="#7c7c86" stroke-width="9" stroke-linecap="round" opacity="0.6" />
-  <rect x="76" y="17" width="7" height="11" rx="1.5" fill="none" stroke="#eaf2ef" stroke-width="1.3" />
-  <rect x="106" y="17" width="7" height="11" rx="1.5" fill="none" stroke="#eaf2ef" stroke-width="1.3" />
-  <rect x="136" y="17" width="7" height="11" rx="1.5" fill="none" stroke="#eaf2ef" stroke-width="1.3" />
-  <circle id="pin-1" cx="0" cy="35" r="0.1" fill="none" />
-  <circle id="pin-2" cx="220" cy="35" r="0.1" fill="none" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 100">
+  <!--
+    Axial-lead electrolytic: blue cylindrical can, flat disc end-caps,
+    and a black chevron-arrow band pointing at the negative lead — the
+    standard polarity marking on this style of can (matches the
+    reference photo). Polarized: pin-1 (left) is NEGATIVE, pin-2
+    (right) is POSITIVE, each labeled with a -/+ glyph.
+
+    NOTE: solid colors only — the canvas SVG parser ignores
+    fill-opacity/stroke-opacity/opacity.
+  -->
+
+  <!-- leads -->
+  <line x1="0" y1="45" x2="34" y2="45" stroke="#c9c2b4" stroke-width="3" />
+  <line x1="186" y1="45" x2="220" y2="45" stroke="#c9c2b4" stroke-width="3" />
+
+  <!-- can body -->
+  <rect x="34" y="15" width="152" height="60" fill="#2159A6" stroke="#0F2A54" stroke-width="2" />
+  <!-- flat disc end-caps (cylinder viewed slightly off-axis) -->
+  <ellipse cx="34" cy="45" rx="9" ry="30" fill="#163E7D" stroke="#0F2A54" stroke-width="2" />
+  <ellipse cx="186" cy="45" rx="9" ry="30" fill="#16407F" stroke="#0F2A54" stroke-width="2" />
+  <!-- gloss highlight -->
+  <path d="M 50 20 L 170 20" stroke="#4E7FC7" stroke-width="4" stroke-linecap="round" />
+
+  <!-- polarity band: chevrons pointing left, toward the negative lead -->
+  <g fill="#111318">
+    <path d="M 162 22 L 148 45 L 162 68 L 172 68 L 158 45 L 172 22 Z" />
+    <path d="M 136 22 L 122 45 L 136 68 L 146 68 L 132 45 L 146 22 Z" />
+    <path d="M 110 22 L 96  45 L 110 68 L 120 68 L 106 45 L 120 22 Z" />
+    <path d="M 84  22 L 70  45 L 84  68 L 94  68 L 80  45 L 94  22 Z" />
+    <path d="M 62  22 L 44  45 L 62  68 L 72  68 L 54  45 L 72  22 Z" />
+  </g>
+
+  <!-- polarity labels (drawn as shapes, not text, for reliable rendering):
+       pin-1 (left) negative, pin-2 (right) positive -->
+  <rect x="8" y="86" width="16" height="5" rx="2" fill="#eaf2ef" />
+  <rect x="196" y="86" width="16" height="5" rx="2" fill="#eaf2ef" />
+  <rect x="201.5" y="79.5" width="5" height="16" rx="2" fill="#eaf2ef" />
+
+  <circle id="pin-1" cx="0" cy="45" r="0.1" fill="none" />
+  <circle id="pin-2" cx="220" cy="45" r="0.1" fill="none" />
 </svg>
