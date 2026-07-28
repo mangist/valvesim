@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 70">
+  <!-- Axial-lead electrolytic: leads from both ends of the can, diagonal
+       highlight + rectangular rating-band cutouts like the reference photo. -->
+  <line x1="0" y1="35" x2="40" y2="35" stroke="#c9c2b4" stroke-width="3" />
+  <line x1="180" y1="35" x2="220" y2="35" stroke="#c9c2b4" stroke-width="3" />
+  <rect x="40" y="10" width="140" height="50" rx="24" fill="#1b1b1f" stroke="#eaf2ef" stroke-width="2" />
+  <path d="M 60 16 L 148 54" stroke="#7c7c86" stroke-width="9" stroke-linecap="round" opacity="0.6" />
+  <rect x="76" y="17" width="7" height="11" rx="1.5" fill="none" stroke="#eaf2ef" stroke-width="1.3" />
+  <rect x="106" y="17" width="7" height="11" rx="1.5" fill="none" stroke="#eaf2ef" stroke-width="1.3" />
+  <rect x="136" y="17" width="7" height="11" rx="1.5" fill="none" stroke="#eaf2ef" stroke-width="1.3" />
+  <circle id="pin-1" cx="0" cy="35" r="0.1" fill="none" />
+  <circle id="pin-2" cx="220" cy="35" r="0.1" fill="none" />
+</svg>

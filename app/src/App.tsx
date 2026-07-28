@@ -259,6 +259,10 @@ export default function App() {
         onPaletteDragStateChange={(dragging) =>
           viewportRef.current?.setInteractionLocked(dragging)
         }
+        onNewComponent={(type, subcategoryLabel) =>
+          // TODO: replace with a "new custom value" dialog.
+          window.alert(`Custom ${subcategoryLabel} ${type} — dialog coming soon.`)
+        }
       />
 
       <main className="vs-canvas-host" ref={hostRef}>

@@ -2,9 +2,9 @@ import { Application, Container, Graphics, type FederatedPointerEvent } from 'pi
 import { Ruler } from './Ruler';
 
 /** Theme colors (Retro Filament Glow) */
-const COLOR_BG = 0x1e1e24; // Deep Charcoal Black
-const COLOR_GRID = 0x2d2d35; // Muted Gunmetal
-const COLOR_GRID_MAJOR = 0x3a3a44;
+const COLOR_BG = 0x2a2a2c; // Neutral Charcoal Gray
+const COLOR_GRID = 0x38383a; // Muted Gunmetal
+const COLOR_GRID_MAJOR = 0x46464a;
 
 const MIN_ZOOM = 0.15;
 const MAX_ZOOM = 8;
