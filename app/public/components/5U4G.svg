@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 340">
+  <!--
+    5U4G rectifier tube: standing T-9 cylindrical envelope (straight
+    sides, hemispherical dome top — not a bulging ST "coke bottle")
+    over a bottom-view octal socket, matching the real tube's shape.
+
+    Only the 5 physical pins of a 5U4G base are present (1, 2, 4, 6, 8);
+    octal positions 3, 5, 7 have no pin. Each pin circle carries
+    id="pin-N" — the wire attachment point referenced by
+    components.json → pins[].svgId.
+    Pin layout: octal viewed from below, key lug down, numbered clockwise.
+
+    NOTE: solid colors only — the canvas SVG parser ignores
+    fill-opacity/stroke-opacity/opacity.
+  -->
+
+  <!-- Glass envelope: straight cylindrical sides + hemispherical dome top.
+       Dome is two cubic-bezier quarter-circles (not an SVG arc command —
+       @pixi-essentials/svg's elliptic-arc support renders malformed
+       geometry; bezier curves are what the tube/transformer art already
+       relies on elsewhere and are known to render correctly). -->
+  <path
+    d="M 56 214
+       L 56 70
+       C 56 40.2 80.2 16 110 16
+       C 139.8 16 164 40.2 164 70
+       L 164 214
+       Z"
+    fill="#2A2C34" stroke="#CDD6D2" stroke-width="3.5" />
+
+  <!-- Interior: twin anode plates, directly-heated filaments, supports -->
+  <g>
+    <!-- support rods to the top press -->
+    <line x1="92" y1="66" x2="102" y2="24" stroke="#6A7078" stroke-width="2" />
+    <line x1="128" y1="66" x2="118" y2="24" stroke="#6A7078" stroke-width="2" />
+    <!-- anode plates -->
+    <rect x="80" y="64" width="24" height="96" rx="3" fill="#3A3F47" stroke="#565D68" stroke-width="1.5" />
+    <rect x="116" y="64" width="24" height="96" rx="3" fill="#3A3F47" stroke="#565D68" stroke-width="1.5" />
+    <!-- filament wires glowing inside each plate -->
+    <path d="M 86 150 L 86 80 Q 92 70 98 80 L 98 150" fill="none" stroke="#FF9F1C" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M 122 150 L 122 80 Q 128 70 134 80 L 134 150" fill="none" stroke="#FF9F1C" stroke-width="2.5" stroke-linecap="round" />
+    <!-- mica spacer at the bottom of the structure -->
+    <line x1="78" y1="172" x2="142" y2="172" stroke="#565D68" stroke-width="2" />
+  </g>
+
+  <!-- Glass reflection streaks: mostly vertical, following the straight sides -->
+  <path d="M 66 190 L 66 55 C 66 44 70 36 76 30" fill="none" stroke="#4E545F" stroke-width="5" stroke-linecap="round" />
+  <path d="M 172 180 L 172 60" fill="none" stroke="#464C56" stroke-width="4" stroke-linecap="round" />
+
+  <!-- Bakelite socket base, bottom view (narrower than the glass bulb) -->
+  <g>
+    <circle cx="110" cy="252" r="72" fill="#2A2019" stroke="#15100C" stroke-width="4" />
+    <circle cx="110" cy="252" r="58" fill="none" stroke="#15100C" stroke-width="1.5" />
+    <!-- center spigot with alignment key (lug points down) -->
+    <circle cx="110" cy="252" r="16" fill="#171310" stroke="#000000" stroke-width="2" />
+    <path d="M 103 265 L 117 265 L 110 278 Z" fill="#171310" stroke="#000000" stroke-width="2" />
+  </g>
+
+  <!-- Pins (octal positions; only the 5 physically present on a 5U4G) -->
+  <g stroke-width="2">
+    <!-- pin 1: NC (mechanical only) -->
+    <circle id="pin-1" cx="88.9" cy="302.8" r="10" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="86.9" cy="300.8" r="3.5" fill="#E6E9EE" stroke="none" />
+
+    <!-- pin 2: FILAMENT+ -->
+    <circle id="pin-2" cx="59.2" cy="273.1" r="10" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="57.2" cy="271.1" r="3.5" fill="#E6E9EE" stroke="none" />
+
+    <!-- pin 4: PLATE_1 -->
+    <circle id="pin-4" cx="89.0" cy="201.2" r="10" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="87.0" cy="199.2" r="3.5" fill="#E6E9EE" stroke="none" />
+
+    <!-- pin 6: PLATE_2 -->
+    <circle id="pin-6" cx="160.8" cy="231.0" r="10" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="158.8" cy="229.0" r="3.5" fill="#E6E9EE" stroke="none" />
+
+    <!-- pin 8: FILAMENT- -->
+    <circle id="pin-8" cx="131.0" cy="302.8" r="10" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="129.0" cy="300.8" r="3.5" fill="#E6E9EE" stroke="none" />
+  </g>
+</svg>

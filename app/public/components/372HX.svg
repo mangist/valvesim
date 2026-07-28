@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <!--
+    Hammond 372HX power transformer: flat 2D front view in the same
+    illustrative style as the tube symbols. Vertical lamination stack,
+    rounded end bell, corner bolts, slotted mounting feet.
+
+    Primaries + shield exit LEFT (schematic convention), secondaries
+    exit RIGHT (HV 600VCT + 50V bias tap, 5VCT, 6.3VCT). Dual-color
+    leads are drawn as the base color with 45-degree tracer stripes,
+    like real striped hookup wire. Each pin circle carries
+    id="pin-<lead>" — the wire attachment point referenced by
+    components.json → pins[].svgId.
+
+    NOTE: solid colors only — the canvas SVG parser ignores
+    fill-opacity/stroke-opacity/opacity.
+  -->
+
+  <!-- ==================== leads ==================== -->
+  <!-- primaries + shield (left) -->
+  <g stroke-width="4">
+    <line x1="76" y1="41"  x2="38" y2="41"  stroke="#3A6BC6" />
+    <line x1="76" y1="63"  x2="38" y2="63"  stroke="#3A6BC6" />
+    <line x1="76" y1="85"  x2="38" y2="85"  stroke="#7A4A2B" />
+    <line x1="76" y1="107" x2="38" y2="107" stroke="#7A4A2B" />
+    <line x1="76" y1="129" x2="38" y2="129" stroke="#17171A" />
+    <line x1="76" y1="151" x2="38" y2="151" stroke="#17171A" />
+    <line x1="76" y1="173" x2="38" y2="173" stroke="#EDEDE6" />
+    <line x1="76" y1="195" x2="38" y2="195" stroke="#EDEDE6" />
+    <line x1="76" y1="217" x2="38" y2="217" stroke="#9A9AA0" />
+  </g>
+  <!-- 45° tracer stripes: BLU/YEL -->
+  <g stroke="#E8C33A" stroke-width="3">
+    <line x1="42" y1="65" x2="46" y2="61" />
+    <line x1="49" y1="65" x2="53" y2="61" />
+    <line x1="56" y1="65" x2="60" y2="61" />
+    <line x1="63" y1="65" x2="67" y2="61" />
+    <line x1="70" y1="65" x2="74" y2="61" />
+  </g>
+  <!-- BRN/YEL -->
+  <g stroke="#E8C33A" stroke-width="3">
+    <line x1="42" y1="87" x2="46" y2="83" />
+    <line x1="49" y1="87" x2="53" y2="83" />
+    <line x1="56" y1="87" x2="60" y2="83" />
+    <line x1="63" y1="87" x2="67" y2="83" />
+    <line x1="70" y1="87" x2="74" y2="83" />
+  </g>
+  <!-- BLK/RED -->
+  <g stroke="#C33B2E" stroke-width="3">
+    <line x1="42" y1="153" x2="46" y2="149" />
+    <line x1="49" y1="153" x2="53" y2="149" />
+    <line x1="56" y1="153" x2="60" y2="149" />
+    <line x1="63" y1="153" x2="67" y2="149" />
+    <line x1="70" y1="153" x2="74" y2="149" />
+  </g>
+  <!-- WHT/BLK -->
+  <g stroke="#17171A" stroke-width="3">
+    <line x1="42" y1="175" x2="46" y2="171" />
+    <line x1="49" y1="175" x2="53" y2="171" />
+    <line x1="56" y1="175" x2="60" y2="171" />
+    <line x1="63" y1="175" x2="67" y2="171" />
+    <line x1="70" y1="175" x2="74" y2="171" />
+  </g>
+
+  <!-- secondaries (right) -->
+  <g stroke-width="4">
+    <line x1="224" y1="30"  x2="262" y2="30"  stroke="#C33B2E" />
+    <line x1="224" y1="52"  x2="262" y2="52"  stroke="#8E5AC8" />
+    <line x1="224" y1="74"  x2="262" y2="74"  stroke="#C33B2E" />
+    <line x1="224" y1="96"  x2="262" y2="96"  stroke="#C33B2E" />
+    <line x1="224" y1="118" x2="262" y2="118" stroke="#E8C33A" />
+    <line x1="224" y1="140" x2="262" y2="140" stroke="#E8C33A" />
+    <line x1="224" y1="162" x2="262" y2="162" stroke="#E8C33A" />
+    <line x1="224" y1="184" x2="262" y2="184" stroke="#3E9B4F" />
+    <line x1="224" y1="206" x2="262" y2="206" stroke="#3E9B4F" />
+    <line x1="224" y1="228" x2="262" y2="228" stroke="#3E9B4F" />
+  </g>
+  <!-- RED/YEL -->
+  <g stroke="#E8C33A" stroke-width="3">
+    <line x1="228" y1="76" x2="232" y2="72" />
+    <line x1="235" y1="76" x2="239" y2="72" />
+    <line x1="242" y1="76" x2="246" y2="72" />
+    <line x1="249" y1="76" x2="253" y2="72" />
+    <line x1="256" y1="76" x2="260" y2="72" />
+  </g>
+  <!-- YEL/BLK -->
+  <g stroke="#17171A" stroke-width="3">
+    <line x1="228" y1="142" x2="232" y2="138" />
+    <line x1="235" y1="142" x2="239" y2="138" />
+    <line x1="242" y1="142" x2="246" y2="138" />
+    <line x1="249" y1="142" x2="253" y2="138" />
+    <line x1="256" y1="142" x2="260" y2="138" />
+  </g>
+  <!-- GRN/YEL -->
+  <g stroke="#E8C33A" stroke-width="3">
+    <line x1="228" y1="208" x2="232" y2="204" />
+    <line x1="235" y1="208" x2="239" y2="204" />
+    <line x1="242" y1="208" x2="246" y2="204" />
+    <line x1="249" y1="208" x2="253" y2="204" />
+    <line x1="256" y1="208" x2="260" y2="204" />
+  </g>
+
+  <!-- ==================== mounting feet ==================== -->
+  <g>
+    <path d="M 76 240 L 42 240 Q 36 240 36 246 L 36 254 Q 36 258 42 258 L 76 258 Z"
+      fill="#23252C" stroke="#15100C" stroke-width="3" />
+    <rect x="46" y="245" width="20" height="7" rx="3.5" fill="#15100C" />
+    <path d="M 224 240 L 258 240 Q 264 240 264 246 L 264 254 Q 264 258 258 258 L 224 258 Z"
+      fill="#23252C" stroke="#15100C" stroke-width="3" />
+    <rect x="234" y="245" width="20" height="7" rx="3.5" fill="#15100C" />
+  </g>
+
+  <!-- ==================== lamination stack ==================== -->
+  <rect x="76" y="18" width="148" height="240" fill="#23252C" stroke="#CDD6D2" stroke-width="3.5" />
+  <!-- lamination striations -->
+  <g stroke="#15181D" stroke-width="2">
+    <line x1="76" y1="42"  x2="94"  y2="42"  /><line x1="206" y1="42"  x2="224" y2="42"  />
+    <line x1="76" y1="66"  x2="94"  y2="66"  /><line x1="206" y1="66"  x2="224" y2="66"  />
+    <line x1="76" y1="90"  x2="94"  y2="90"  /><line x1="206" y1="90"  x2="224" y2="90"  />
+    <line x1="76" y1="114" x2="94"  y2="114" /><line x1="206" y1="114" x2="224" y2="114" />
+    <line x1="76" y1="138" x2="94"  y2="138" /><line x1="206" y1="138" x2="224" y2="138" />
+    <line x1="76" y1="162" x2="94"  y2="162" /><line x1="206" y1="162" x2="224" y2="162" />
+    <line x1="76" y1="186" x2="94"  y2="186" /><line x1="206" y1="186" x2="224" y2="186" />
+    <line x1="76" y1="210" x2="94"  y2="210" /><line x1="206" y1="210" x2="224" y2="210" />
+    <line x1="76" y1="234" x2="94"  y2="234" /><line x1="206" y1="234" x2="224" y2="234" />
+  </g>
+
+  <!-- corner bolts -->
+  <g stroke-width="2">
+    <circle cx="86"  cy="28"  r="5" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="214" cy="28"  r="5" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="86"  cy="248" r="5" fill="#B9BEC7" stroke="#6E747E" />
+    <circle cx="214" cy="248" r="5" fill="#B9BEC7" stroke="#6E747E" />
+  </g>
+
+  <!-- ==================== end bell ==================== -->
+  <rect x="96" y="38" width="108" height="200" rx="16" fill="#2A2C34" stroke="#CDD6D2" stroke-width="3" />
+  <!-- bell highlight -->
+  <path d="M 104 66 C 104 52 112 46 124 46" fill="none" stroke="#4E545F" stroke-width="5" stroke-linecap="round" />
+  <!-- spec label plate -->
+  <rect x="116" y="52" width="68" height="34" rx="3" fill="#C9CFC9" stroke="#8A8F8A" stroke-width="1.5" />
+  <g stroke="#5A5F5A" stroke-width="2">
+    <line x1="122" y1="60" x2="178" y2="60" />
+    <line x1="122" y1="67" x2="178" y2="67" />
+    <line x1="122" y1="74" x2="166" y2="74" />
+  </g>
+  <!-- amber winding hint at bell base -->
+  <g stroke="#FF9F1C" stroke-width="2.5">
+    <line x1="112" y1="216" x2="188" y2="216" />
+    <line x1="112" y1="222" x2="188" y2="222" />
+  </g>
+
+  <!-- ==================== pins ==================== -->
+  <!-- primaries + shield (left) -->
+  <g stroke-width="2.5">
+    <circle id="pin-blu"    cx="30" cy="41"  r="8" fill="#3A6BC6" stroke="#15100C" />
+    <circle id="pin-bluyel" cx="30" cy="63"  r="8" fill="#3A6BC6" stroke="#15100C" />
+    <circle id="pin-brnyel" cx="30" cy="85"  r="8" fill="#7A4A2B" stroke="#15100C" />
+    <circle id="pin-brn"    cx="30" cy="107" r="8" fill="#7A4A2B" stroke="#15100C" />
+    <circle id="pin-blk"    cx="30" cy="129" r="8" fill="#17171A" stroke="#6E747E" />
+    <circle id="pin-blkred" cx="30" cy="151" r="8" fill="#17171A" stroke="#6E747E" />
+    <circle id="pin-whtblk" cx="30" cy="173" r="8" fill="#EDEDE6" stroke="#8A8F9A" />
+    <circle id="pin-wht"    cx="30" cy="195" r="8" fill="#EDEDE6" stroke="#8A8F9A" />
+    <circle id="pin-gry"    cx="30" cy="217" r="8" fill="#9A9AA0" stroke="#15100C" />
+  </g>
+  <!-- secondaries (right) -->
+  <g stroke-width="2.5">
+    <circle id="pin-red1"   cx="270" cy="30"  r="8" fill="#C33B2E" stroke="#15100C" />
+    <circle id="pin-vio"    cx="270" cy="52"  r="8" fill="#8E5AC8" stroke="#15100C" />
+    <circle id="pin-redyel" cx="270" cy="74"  r="8" fill="#C33B2E" stroke="#15100C" />
+    <circle id="pin-red2"   cx="270" cy="96"  r="8" fill="#C33B2E" stroke="#15100C" />
+    <circle id="pin-yel1"   cx="270" cy="118" r="8" fill="#E8C33A" stroke="#15100C" />
+    <circle id="pin-yelblk" cx="270" cy="140" r="8" fill="#E8C33A" stroke="#15100C" />
+    <circle id="pin-yel2"   cx="270" cy="162" r="8" fill="#E8C33A" stroke="#15100C" />
+    <circle id="pin-grn1"   cx="270" cy="184" r="8" fill="#3E9B4F" stroke="#15100C" />
+    <circle id="pin-grnyel" cx="270" cy="206" r="8" fill="#3E9B4F" stroke="#15100C" />
+    <circle id="pin-grn2"   cx="270" cy="228" r="8" fill="#3E9B4F" stroke="#15100C" />
+  </g>
+</svg>

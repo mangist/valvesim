@@ -1,0 +1,278 @@
+/* ============================================================
+   Valvesim — "Retro Filament Glow" (Warm Dark Mode)
+   Inspired by vintage tube amplifiers and glowing filaments.
+   ============================================================ */
+
+:root {
+  /* Core palette */
+  --vs-bg: #1e1e24; /* Deep Charcoal Black — canvas & app background */
+  --vs-grid: #2d2d35; /* Muted Gunmetal — schematic grid lines */
+  --vs-glow: #ff9f1c; /* Amber / Filament Glow — active elements & wires */
+  --vs-cream: #eaf2ef; /* Off-White Cream — UI accents & text */
+
+  /* Derived tones */
+  --vs-bg-raised: #26262e; /* panels, sidebars */
+  --vs-bg-inset: #17171c; /* wells, inputs */
+  --vs-border: #33333d;
+  --vs-glow-soft: rgba(255, 159, 28, 0.35);
+  --vs-glow-dim: #b06f14;
+  --vs-text-muted: #9a9aa5;
+
+  color-scheme: dark;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--vs-bg);
+  color: var(--vs-cream);
+  overflow: hidden;
+}
+
+/* ---------- App layout shell ---------- */
+
+.vs-app {
+  display: grid;
+  grid-template-rows: 108px 1fr 28px;
+  grid-template-columns: 260px 1fr;
+  grid-template-areas:
+    'header header'
+    'sidebar canvas'
+    'status status';
+  height: 100%;
+}
+
+.vs-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px 0 0;
+  background: var(--vs-bg-raised);
+  border-bottom: 1px solid var(--vs-border);
+}
+
+.vs-logo {
+  /* Same width as the sidebar column below it; height follows the
+     logo's native 600x200 aspect ratio (3:1). */
+  width: 260px;
+  height: auto;
+  display: block;
+}
+
+.vs-header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.vs-sidebar {
+  grid-area: sidebar;
+  background: var(--vs-bg-raised);
+  border-right: 1px solid var(--vs-border);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.vs-sidebar h2 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vs-text-muted);
+  margin: 12px 4px 8px;
+}
+
+.vs-canvas-host {
+  grid-area: canvas;
+  position: relative;
+  overflow: hidden;
+  background: var(--vs-bg);
+}
+
+.vs-canvas-host canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.vs-statusbar {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--vs-text-muted);
+  background: var(--vs-bg-raised);
+  border-top: 1px solid var(--vs-border);
+}
+
+.vs-statusbar .vs-status-ok {
+  color: var(--vs-glow);
+}
+
+/* ---------- Controls ---------- */
+
+.vs-btn {
+  appearance: none;
+  border: 1px solid var(--vs-border);
+  background: var(--vs-bg-inset);
+  color: var(--vs-cream);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.vs-btn:hover {
+  border-color: var(--vs-glow);
+}
+
+.vs-btn-primary {
+  background: var(--vs-glow);
+  border-color: var(--vs-glow);
+  color: var(--vs-bg);
+  font-weight: 600;
+}
+
+.vs-btn-primary:hover {
+  box-shadow: 0 0 12px var(--vs-glow-soft);
+}
+
+.vs-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Component palette ---------- */
+
+.vs-palette-category {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vs-text-muted);
+  margin: 10px 4px 6px;
+}
+
+.vs-palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--vs-border);
+  border-radius: 6px;
+  background: var(--vs-bg-inset);
+  cursor: grab;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.vs-palette-item:hover {
+  border-color: var(--vs-glow);
+  box-shadow: 0 0 8px var(--vs-glow-soft);
+}
+
+.vs-palette-item-icon {
+  display: flex;
+  align-items: center;
+  color: var(--vs-cream);
+  flex-shrink: 0;
+}
+
+.vs-palette-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vs-cream);
+  margin-right: auto;
+}
+
+.vs-palette-item-type {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--vs-glow);
+  border: 1px solid var(--vs-glow-dim);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+/* Floating preview while dragging a palette component onto the canvas */
+.vs-drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  width: 90px;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 10px var(--vs-glow-soft));
+}
+
+.vs-drag-ghost img {
+  display: block;
+  width: 100%;
+}
+
+.vs-drag-ghost-chip {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--vs-glow);
+  border-radius: 6px;
+  background: var(--vs-bg-raised);
+  color: var(--vs-cream);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Placeholder card for the (empty) component palette */
+.vs-palette-empty {
+  border: 1px dashed var(--vs-border);
+  border-radius: 8px;
+  padding: 16px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--vs-text-muted);
+  text-align: center;
+}
+
+/* ---------- Slider (filament-glow styled) ---------- */
+
+.vs-slider {
+  display: block;
+  padding: 8px 4px;
+  font-size: 12px;
+  color: var(--vs-text-muted);
+}
+
+.vs-slider-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.vs-slider-value {
+  color: var(--vs-glow);
+  font-variant-numeric: tabular-nums;
+}
+
+.vs-slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--vs-glow);
+  background: transparent;
+}

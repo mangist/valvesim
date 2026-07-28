@@ -1,0 +1,151 @@
+{
+  "$comment": "Valvesim component library. Temporary JSON store — mirrors the future PostgreSQL `components` table (see api/src/models/schema.sql).",
+  "components": [
+    {
+      "id": "wire-hookup",
+      "name": "Hookup Wire",
+      "category": "Wiring",
+      "type": "wire",
+      "description": "Cloth-covered solid-core hookup wire. Drawn by clicking a component pin, not dropped from the palette.",
+      "width": 0.08,
+      "height": 0.08,
+      "pins": [],
+      "properties": {
+        "gauge": "20 AWG",
+        "insulation": "cloth"
+      }
+    },
+    {
+      "id": "ac-inlet-120v",
+      "name": "120V AC Input",
+      "category": "Power Input",
+      "type": "ac-inlet",
+      "description": "IEC-320 C14 panel-mount mains inlet with integrated rocker switch. Represents the wall-mains source: 120VRMS/60Hz between L and N, PE bonded to chassis ground.",
+      "width": 2.0,
+      "height": 1.0,
+      "symbol": "/components/IEC-Socket.svg",
+      "pins": [
+        { "number": "L", "name": "LINE", "svgId": "pin-l", "terminal": "L" },
+        { "number": "N", "name": "NEUTRAL", "svgId": "pin-n", "terminal": "N" },
+        { "number": "PE", "name": "EARTH_GND", "svgId": "pin-pe", "terminal": "PE" }
+      ],
+      "properties": {
+        "voltage": 120,
+        "frequency": 60,
+        "hasSwitch": true
+      },
+      "spice": {
+        "file": "120VAC.inc",
+        "subckt": "120VAC",
+        "ports": ["L", "N", "PE"],
+        "instances": [
+          { "suffix": "", "portToPin": { "L": "L", "N": "N", "PE": "PE" } }
+        ],
+        "notes": "Source model: VAC L N SIN(0 169.7 60); PE bonded to node 0 through 10milliohm; N tied to 0 through 10Meg to avoid a floating-node solver error before downstream wiring provides a ground reference."
+      }
+    },
+    {
+      "id": "xfmr-hammond-372hx",
+      "name": "Hammond 372HX",
+      "category": "Power Transformers",
+      "type": "transformer",
+      "description": "191VA power transformer. Dual 100/110/120V primaries with electrostatic shield; 600VCT @ 230mA HV with 50V bias tap, 5VCT @ 3A rectifier filament, 6.3VCT @ 6A heaters.",
+      "width": 3.75,
+      "height": 4.5,
+      "symbol": "/components/372HX.svg",
+      "pins": [
+        { "number": "RED1", "name": "HV_START", "svgId": "pin-red1", "terminal": "RED1" },
+        { "number": "VIO", "name": "BIAS_50V", "svgId": "pin-vio", "terminal": "VIO" },
+        { "number": "RED/YEL", "name": "HV_CT", "svgId": "pin-redyel", "terminal": "REDYEL" },
+        { "number": "RED2", "name": "HV_END", "svgId": "pin-red2", "terminal": "RED2" },
+        { "number": "YEL1", "name": "FIL5_A", "svgId": "pin-yel1", "terminal": "YEL1" },
+        { "number": "YEL/BLK", "name": "FIL5_CT", "svgId": "pin-yelblk", "terminal": "YELBLK" },
+        { "number": "YEL2", "name": "FIL5_B", "svgId": "pin-yel2", "terminal": "YEL2" },
+        { "number": "GRN1", "name": "HTR6_A", "svgId": "pin-grn1", "terminal": "GRN1" },
+        { "number": "GRN/YEL", "name": "HTR6_CT", "svgId": "pin-grnyel", "terminal": "GRNYEL" },
+        { "number": "GRN2", "name": "HTR6_B", "svgId": "pin-grn2", "terminal": "GRN2" },
+        { "number": "BLU", "name": "PRI_A_120V", "svgId": "pin-blu", "terminal": "BLU" },
+        { "number": "BLU/YEL", "name": "PRI_A_110V", "svgId": "pin-bluyel", "terminal": "BLUYEL" },
+        { "number": "BRN/YEL", "name": "PRI_A_100V", "svgId": "pin-brnyel", "terminal": "BRNYEL" },
+        { "number": "BRN", "name": "PRI_A_0V", "svgId": "pin-brn", "terminal": "BRN" },
+        { "number": "BLK", "name": "PRI_B_120V", "svgId": "pin-blk", "terminal": "BLK" },
+        { "number": "BLK/RED", "name": "PRI_B_110V", "svgId": "pin-blkred", "terminal": "BLKRED" },
+        { "number": "WHT/BLK", "name": "PRI_B_100V", "svgId": "pin-whtblk", "terminal": "WHTBLK" },
+        { "number": "WHT", "name": "PRI_B_0V", "svgId": "pin-wht", "terminal": "WHT" },
+        { "number": "GRY", "name": "SHIELD", "svgId": "pin-gry", "terminal": "GRY" }
+      ],
+      "properties": {
+        "primaryVoltage": 120,
+        "va": 191,
+        "primaryInductance": 1.3,
+        "primaryDcResistance": 3.652,
+        "secondaries": [
+          { "label": "HV plate supply", "voltage": 600, "current": 0.23, "centerTapped": true, "dcResistance": 77.16 },
+          { "label": "Bias tap (VIO, 50V from CT)", "voltage": 50 },
+          { "label": "Rectifier filament", "voltage": 5, "current": 3, "centerTapped": true, "dcResistance": 0.043 },
+          { "label": "Heaters", "voltage": 6.3, "current": 6, "centerTapped": true, "dcResistance": 0.046 }
+        ]
+      },
+      "spice": {
+        "file": "372HX.inc",
+        "subckt": "372HX",
+        "ports": ["WHT", "WHTBLK", "BLKRED", "BLK", "BRN", "BRNYEL", "BLUYEL", "BLU", "GRY", "RED1", "VIO", "REDYEL", "RED2", "YEL1", "YELBLK", "YEL2", "GRN1", "GRNYEL", "GRN2"],
+        "instances": [
+          {
+            "suffix": "",
+            "portToPin": {
+              "WHT": "WHT", "WHTBLK": "WHT/BLK", "BLKRED": "BLK/RED", "BLK": "BLK",
+              "BRN": "BRN", "BRNYEL": "BRN/YEL", "BLUYEL": "BLU/YEL", "BLU": "BLU",
+              "GRY": "GRY",
+              "RED1": "RED1", "VIO": "VIO", "REDYEL": "RED/YEL", "RED2": "RED2",
+              "YEL1": "YEL1", "YELBLK": "YEL/BLK", "YEL2": "YEL2",
+              "GRN1": "GRN1", "GRNYEL": "GRN/YEL", "GRN2": "GRN2"
+            }
+          }
+        ],
+        "notes": "Coupled-inductor model generated from datasheet no-load voltages and DCR (matches within 0.2%). Verified against eecircuit-engine. Shield lead is tied to node 0 through 1G internally."
+      }
+    },
+    {
+      "id": "tube-5u4g",
+      "name": "5U4G",
+      "category": "Rectifier Tubes",
+      "type": "tube",
+      "description": "Directly-heated twin-diode full-wave rectifier in a shouldered ST-16 glass envelope. Workhorse HT rectifier for 40s-60s amplifiers.",
+      "width": 2,
+      "height": 5.5,
+      "symbol": "/components/5U4G.svg",
+      "pins": [
+        { "number": "1", "name": "NC", "svgId": "pin-1", "terminal": null },
+        { "number": "2", "name": "FILAMENT+", "svgId": "pin-2", "terminal": "K" },
+        { "number": "4", "name": "PLATE_1", "svgId": "pin-4", "terminal": "A.A" },
+        { "number": "6", "name": "PLATE_2", "svgId": "pin-6", "terminal": "B.A" },
+        { "number": "8", "name": "FILAMENT-", "svgId": "pin-8", "terminal": "K" }
+      ],
+      "properties": {
+        "tubeType": "full-wave-rectifier",
+        "base": "Octal (IO), 5T basing",
+        "heaterVoltage": 5,
+        "heaterCurrent": 3,
+        "directlyHeated": true,
+        "sections": 2,
+        "maxRatings": {
+          "peakInverseVoltage": 1550,
+          "peakPlateCurrentPerPlate": 1,
+          "dcOutputCurrent": 0.275,
+          "acPlateVoltageRmsPerPlate": 550
+        }
+      },
+      "spice": {
+        "file": "5U4G.inc",
+        "subckt": "5U4G",
+        "ports": ["A", "K"],
+        "instances": [
+          { "suffix": "A", "portToPin": { "A": "4", "K": "8" } },
+          { "suffix": "B", "portToPin": { "A": "6", "K": "8" } }
+        ],
+        "notes": "Ayumi Nakabayashi generic diode model — one instance per plate, filament (pins 2/8) is the cathode. Heater supply is not part of the model."
+      }
+    }
+  ]
+}

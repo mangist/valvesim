@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="100%" height="100%">
+  <defs>
+    <!-- Filament Amber Glow Gradient -->
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFB13B" />
+      <stop offset="100%" stop-color="#FF7A00" />
+    </linearGradient>
+    <!-- Background Contrast Card -->
+    <style>
+      .bg-card { fill: #1E1E24; rx: 12px; }
+      .text-bold { font-family: 'Inter', 'Segoe UI', sans-serif; font-weight: 800; font-size: 42px; fill: #FFFFFF; }
+      .text-tld { font-family: 'Inter', 'Segoe UI', sans-serif; font-weight: 400; font-size: 42px; fill: #FF9F1C; }
+      .schematic-line { stroke: #4A4F5A; stroke-width: 2; stroke-dasharray: 4 4; fill: none; }
+      .accent-wire { stroke: #FF9F1C; stroke-width: 3; fill: none; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <!-- Dark Mode Workspace Base Canvas -->
+  <rect width="600" height="200" class="bg-card" />
+
+  <!-- Background Decorative Grid Vector Lines -->
+  <path d="M 30,0 L 30,200 M 570,0 L 570,200 M 0,40 L 600,40 M 0,160 L 600,160" class="schematic-line" />
+
+  <!-- Logo Mark Group: Interactive Vacuum Tube Graphic -->
+  <g transform="translate(65, 45)">
+    <!-- Glass Envelope Outer Shell -->
+    <rect x="25" y="10" width="60" height="85" rx="30" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.9" />
+    <path d="M 45,10 Q 55,2 55,2 Q 55,2 65,10" fill="none" stroke="#FFFFFF" stroke-width="4" />
+
+    <!-- Internal Plate / Anode Structure -->
+    <rect x="38" y="30" width="34" height="40" rx="3" fill="#3A3F47" stroke="#FFFFFF" stroke-width="2" />
+    <line x1="45" y1="35" x2="45" y2="65" stroke="#1E1E24" stroke-width="2" />
+    <line x1="65" y1="35" x2="65" y2="65" stroke="#1E1E24" stroke-width="2" />
+
+    <!-- Glowing Filament (The Core Element) -->
+    <path d="M 48,70 L 48,42 Q 55,35 55,42 L 55,70" class="accent-wire" stroke="url(#glowGrad)" />
+
+    <!-- Base / Socket & Pins -->
+    <rect x="20" y="95" width="70" height="12" rx="2" fill="#111113" />
+    <line x1="35" y1="107" x2="35" y2="117" stroke="#E0E0E6" stroke-width="3" stroke-linecap="round" />
+    <line x1="55" y1="107" x2="55" y2="120" stroke="#FF9F1C" stroke-width="3" stroke-linecap="round" />
+    <line x1="75" y1="107" x2="75" y2="117" stroke="#E0E0E6" stroke-width="3" stroke-linecap="round" />
+  </g>
+
+  <!-- Interactive Input/Output Wire Paths Wrapping Content -->
+  <path d="M 30,100 L 90,100" class="accent-wire" />
+  <circle cx="30" cy="100" r="5" fill="#FF9F1C" />
+  <path d="M 120,100 L 175,100" stroke="#4A4F5A" stroke-width="3" fill="none" />
+  <circle cx="175" cy="100" r="5" fill="#4A4F5A" />
+
+  <text x="210" y="112">
+    <tspan class="text-bold">valve</tspan>
+    <tspan class="text-bold" fill="#FF9F1C">sim</tspan>
+    <tspan class="text-tld">.com</tspan>
+  </text>
+</svg>

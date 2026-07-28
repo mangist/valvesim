@@ -1,0 +1,31 @@
+/* ============================================================
+   App-level component styles (theme tokens live in theme.css)
+   ============================================================ */
+
+/* Inline editor for component name labels (overlays the canvas label).
+   Position comes from --vs-label-x/--vs-label-y, set by App when the
+   editor opens — coordinates are data, all styling lives here. */
+.vs-label-input {
+  position: absolute;
+  left: var(--vs-label-x);
+  top: var(--vs-label-y);
+  transform: translate(-50%, -100%);
+  z-index: 20;
+  background: var(--vs-bg-inset);
+  border: 1px solid var(--vs-glow);
+  border-radius: 6px;
+  color: var(--vs-cream);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 26px;
+  font-weight: 600;
+  text-align: center;
+  padding: 2px 10px;
+  width: 320px;
+  outline: none;
+  box-shadow: 0 0 10px var(--vs-glow-soft);
+}
+
+/* Right-aligned hint in the status bar */
+.vs-status-hint {
+  margin-left: auto;
+}

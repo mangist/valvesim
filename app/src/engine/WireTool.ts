@@ -1,0 +1,149 @@
+import type { FederatedPointerEvent } from 'pixi.js';
+import { PlacedWire } from './PlacedWire';
+import type { Viewport } from './Viewport';
+import type { Pin } from './Component';
+import type { PlacedComponent } from './PlacedComponent';
+import type { ComponentModel } from '../library';
+
+/**
+ * Interactive wiring tool.
+ *
+ * Click a pin → a Verlet wire is created, locked to that pin (it follows
+ * the pin if the component is later dragged), with the other end
+ * following the mouse. Click a second pin → that end locks too and both
+ * pins are merged onto the same SPICE net. Click empty canvas instead →
+ * the free end simply drops in place, unattached. Panning/zooming is
+ * locked while a wire is in hand.
+ */
+export class WireTool {
+  private wire: PlacedWire | null = null;
+  private fromComponent: PlacedComponent | null = null;
+  private fromPin: Pin | null = null;
+  private netCounter = 0;
+
+  constructor(
+    private viewport: Viewport,
+    private wireModel: ComponentModel,
+    private onPlaced?: (wire: PlacedWire) => void,
+  ) {}
+
+  get isActive(): boolean {
+    return this.wire !== null;
+  }
+
+  /** Begin a wire at a component pin (its world position); locks endpoint 0. */
+  startFromPin(component: PlacedComponent, pin: Pin): void {
+    if (this.wire) return;
+
+    const pos = this.pinWorldPos(component, pin);
+    const wire = new PlacedWire(this.wireModel, pos.x, pos.y, pos.x, pos.y);
+    this.viewport.world.addChild(wire);
+    wire.attach(this.viewport.app.ticker);
+    this.wire = wire;
+    this.fromComponent = component;
+    this.fromPin = pin;
+
+    this.lockEndpoint(0, component, pin);
+
+    this.viewport.setInteractionLocked(true);
+    const stage = this.viewport.app.stage;
+    stage.on('globalpointermove', this.onMove);
+    stage.on('pointerdown', this.onStageDown);
+  }
+
+  /**
+   * Lock the free end onto a second pin — merges both pins onto the same
+   * net and drops the wire in place. Returns the finished wire.
+   */
+  finishOnPin(component: PlacedComponent, pin: Pin): PlacedWire | null {
+    if (!this.wire) return null;
+    this.lockEndpoint(1, component, pin);
+    return this.place();
+  }
+
+  /** Drop the wire where it is; returns it (or null if none in hand). */
+  place(): PlacedWire | null {
+    const wire = this.wire;
+    if (!wire) return null;
+    this.teardown();
+    this.onPlaced?.(wire);
+    return wire;
+  }
+
+  /** Abort wiring and remove the in-hand wire. */
+  cancel(): void {
+    const wire = this.wire;
+    if (!wire) return;
+    this.teardown();
+    wire.destroy();
+  }
+
+  /** Release listeners (component unmount). */
+  dispose(): void {
+    this.cancel();
+  }
+
+  /** A pin's current position in world (viewport) coordinates. */
+  private pinWorldPos(component: PlacedComponent, pin: Pin): { x: number; y: number } {
+    const global = component.toGlobal({ x: pin.x, y: pin.y });
+    return this.viewport.world.toLocal(global);
+  }
+
+  /**
+   * Attach a wire endpoint to a component pin: records the attachment,
+   * snaps to the pin's current position, keeps following it every frame
+   * (so dragging the component drags the wire along), and assigns/merges
+   * the electrical net so the connection is netlist-valid.
+   */
+  private lockEndpoint(which: 0 | 1, component: PlacedComponent, pin: Pin): void {
+    const wire = this.wire;
+    if (!wire) return;
+
+    const attachment = { componentGuid: component.guid, pinId: pin.id };
+    if (which === 0) wire.from = attachment;
+    else wire.to = attachment;
+
+    const pos = this.pinWorldPos(component, pin);
+    wire.setEndpoint(which, pos.x, pos.y);
+    wire.setFollow(which, () => this.pinWorldPos(component, pin));
+
+    const net =
+      which === 0 || !this.fromPin
+        ? (pin.net ??= `N${++this.netCounter}`)
+        : this.mergeNets(this.fromPin, pin);
+    wire.net = net;
+    component.refreshPins();
+    // The merge may also have just assigned the *other* end's pin a net
+    // for the first time (e.g. it had none before) — repaint it too.
+    if (which === 1) this.fromComponent?.refreshPins();
+  }
+
+  /** Merge two pins onto the same net (existing net wins; else mint a new one). */
+  private mergeNets(a: Pin, b: Pin): string {
+    const net = a.net ?? b.net ?? `N${++this.netCounter}`;
+    a.net = net;
+    b.net = net;
+    return net;
+  }
+
+  private onMove = (e: FederatedPointerEvent) => {
+    const wire = this.wire;
+    if (!wire) return;
+    const world = this.viewport.world.toLocal(e.global);
+    wire.setEndpoint(1, world.x, world.y);
+  };
+
+  private onStageDown = () => {
+    this.place();
+  };
+
+  private teardown(): void {
+    const stage = this.viewport.app.stage;
+    stage.off('globalpointermove', this.onMove);
+    stage.off('pointerdown', this.onStageDown);
+    this.viewport.setInteractionLocked(false);
+    this.wire = null;
+    this.fromComponent = null;
+    this.fromPin = null;
+  }
+}
