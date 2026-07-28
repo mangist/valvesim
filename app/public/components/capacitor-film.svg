@@ -18,9 +18,12 @@
 
   <!-- capsule body -->
   <rect x="30" y="8" width="160" height="88" rx="44" fill="#D9502A" stroke="#7A2A13" stroke-width="3" />
-  <!-- crimped foil ends (darker bands near the rounded caps) -->
-  <path d="M 40 10 A 44 44 0 0 0 40 94" fill="none" stroke="#7A2A13" stroke-width="3" />
-  <path d="M 180 10 A 44 44 0 0 1 180 94" fill="none" stroke="#7A2A13" stroke-width="3" />
+  <!-- crimped foil ends (darker bands near the rounded caps).
+       Bezier curves, not SVG arc ('A') commands — @pixi-essentials/svg
+       renders elliptical arcs as malformed/self-intersecting geometry in
+       this pipeline (same issue fixed on the 5U4G tube's dome). -->
+  <path d="M 40 10 C 20 28, 20 76, 40 94" fill="none" stroke="#7A2A13" stroke-width="3" />
+  <path d="M 180 10 C 200 28, 200 76, 180 94" fill="none" stroke="#7A2A13" stroke-width="3" />
   <!-- gloss highlight -->
   <path d="M 52 22 C 80 12, 140 12, 168 22" fill="none" stroke="#F0805A" stroke-width="6" stroke-linecap="round" />
 
