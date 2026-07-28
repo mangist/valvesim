@@ -17,6 +17,7 @@ export const REFDES_PREFIX: Record<string, string> = {
   [ComponentType.Jack]: 'J',
   [ComponentType.SolderLugStrip]: 'TS',
   [ComponentType.AcInlet]: 'AC',
+  [ComponentType.Ground]: 'GND',
 };
 
 /**
