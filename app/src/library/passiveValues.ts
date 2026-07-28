@@ -171,19 +171,27 @@ function buildCapacitorDefinitions(): CapacitorDefinition[] {
   );
 }
 
+/** Reference art for carbon-comp resistors, keyed by power rating (watts). */
+const CARBON_COMP_SYMBOL: Record<number, { symbol: string; width: number; height: number }> = {
+  0.5: { symbol: '/components/CC-0.5W.svg', width: 0.9, height: 0.14 },
+  1: { symbol: '/components/CC-1W.svg', width: 1.1, height: 0.19 },
+  2: { symbol: '/components/CC-2W.svg', width: 1.3, height: 0.26 },
+};
+
 function buildResistorDefinitions(): ResistorDefinition[] {
   return RESISTOR_SUBCATEGORIES.flatMap((sub) =>
     sub.values.map(({ resistance, powerRating }): ResistorDefinition => {
       const resLabel = formatEng(resistance, 'Ω');
+      const art = sub.key === 'carbon-comp' ? CARBON_COMP_SYMBOL[powerRating] : undefined;
       return {
         id: `resistor-${sub.key}-${idSafe(resLabel)}-${powerRating}w`,
         name: `${resLabel} ${powerRating}W`,
         category: 'Resistors',
         type: ComponentType.Resistor,
         description: `${sub.label} resistor, ${resLabel}, ${powerRating}W rated.`,
-        width: 0.25,
-        height: 0.6,
-        symbol: '/components/resistor-placeholder.svg',
+        width: art?.width ?? 0.25,
+        height: art?.height ?? 0.6,
+        symbol: art?.symbol ?? '/components/resistor-placeholder.svg',
         pins: TWO_LEAD_PINS,
         properties: { resistance, powerRating, resistorType: sub.key },
       };

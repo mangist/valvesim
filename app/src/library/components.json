@@ -171,63 +171,6 @@
         ],
         "notes": "Ayumi Nakabayashi generic diode model — one instance per plate, filament (pins 2/8) is the cathode. Heater supply is not part of the model."
       }
-    },
-    {
-      "id": "resistor-cc-0.5w",
-      "name": "Carbon Comp Resistor (0.5W)",
-      "category": "Resistors",
-      "type": "resistor",
-      "description": "Carbon composition resistor, 0.5W. Small brown cylindrical body with axial leads.",
-      "width": 0.4,
-      "height": 0.2,
-      "symbol": "/components/CC-0.5W.svg",
-      "pins": [
-        { "number": "1", "name": "TERMINAL_1", "svgId": "pin-1", "terminal": "1" },
-        { "number": "2", "name": "TERMINAL_2", "svgId": "pin-2", "terminal": "2" }
-      ],
-      "properties": {
-        "resistance": 100000,
-        "powerRating": 0.5,
-        "tolerance": 10
-      }
-    },
-    {
-      "id": "resistor-cc-1w",
-      "name": "Carbon Comp Resistor (1W)",
-      "category": "Resistors",
-      "type": "resistor",
-      "description": "Carbon composition resistor, 1W. Medium brown cylindrical body with axial leads.",
-      "width": 0.5,
-      "height": 0.25,
-      "symbol": "/components/CC-1W.svg",
-      "pins": [
-        { "number": "1", "name": "TERMINAL_1", "svgId": "pin-1", "terminal": "1" },
-        { "number": "2", "name": "TERMINAL_2", "svgId": "pin-2", "terminal": "2" }
-      ],
-      "properties": {
-        "resistance": 100000,
-        "powerRating": 1,
-        "tolerance": 10
-      }
-    },
-    {
-      "id": "resistor-cc-2w",
-      "name": "Carbon Comp Resistor (2W)",
-      "category": "Resistors",
-      "type": "resistor",
-      "description": "Carbon composition resistor, 2W. Large brown cylindrical body with axial leads.",
-      "width": 0.6,
-      "height": 0.3,
-      "symbol": "/components/CC-2W.svg",
-      "pins": [
-        { "number": "1", "name": "TERMINAL_1", "svgId": "pin-1", "terminal": "1" },
-        { "number": "2", "name": "TERMINAL_2", "svgId": "pin-2", "terminal": "2" }
-      ],
-      "properties": {
-        "resistance": 100000,
-        "powerRating": 2,
-        "tolerance": 10
-      }
     }
   ]
 }
