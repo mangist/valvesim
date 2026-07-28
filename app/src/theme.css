@@ -212,6 +212,43 @@ body {
   padding: 1px 7px;
 }
 
+/* Hierarchical branch row (Capacitors/Resistors -> subcategory -> values) */
+.vs-palette-branch {
+  cursor: default;
+  position: relative;
+}
+
+.vs-palette-branch-arrow {
+  color: var(--vs-text-muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.vs-flyout {
+  position: fixed;
+  z-index: 1001;
+  min-width: 200px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--vs-border);
+  border-radius: 8px;
+  background: var(--vs-bg-raised);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 8px var(--vs-glow-soft);
+}
+
+.vs-palette-new {
+  cursor: pointer;
+  justify-content: center;
+  border-style: dashed;
+  color: var(--vs-text-muted);
+}
+
+.vs-palette-new:hover {
+  color: var(--vs-glow);
+  border-color: var(--vs-glow);
+}
+
 /* Floating preview while dragging a palette component onto the canvas */
 .vs-drag-ghost {
   position: fixed;

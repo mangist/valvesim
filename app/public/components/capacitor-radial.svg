@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150">
+  <!-- Radial-lead electrolytic: both leads exit the base, lighter rating
+       band + polarity rectangle low on the can like the reference photo. -->
+  <rect x="20" y="10" width="60" height="100" rx="12" fill="#1b1b1f" stroke="#eaf2ef" stroke-width="2" />
+  <rect x="22" y="80" width="56" height="28" fill="#b9b9be" />
+  <rect x="27" y="86" width="10" height="15" rx="1.5" fill="none" stroke="#1b1b1f" stroke-width="1.3" />
+  <line x1="40" y1="110" x2="40" y2="150" stroke="#c9c2b4" stroke-width="3" />
+  <line x1="60" y1="110" x2="60" y2="150" stroke="#c9c2b4" stroke-width="3" />
+  <circle id="pin-1" cx="40" cy="150" r="0.1" fill="none" />
+  <circle id="pin-2" cx="60" cy="150" r="0.1" fill="none" />
+</svg>

@@ -2,8 +2,8 @@ import { Container, Graphics, Text } from 'pixi.js';
 import { PIXELS_PER_INCH } from './units';
 
 const SIZE = 24; // ruler strip thickness, screen px
-const COLOR_BG = 0x26262e;
-const COLOR_BORDER = 0x33333d;
+const COLOR_BG = 0x2f2f31;
+const COLOR_BORDER = 0x3a3a3c;
 const COLOR_TICK = 0x6a6f7a;
 const COLOR_TEXT = 0x9a9aa5;
 

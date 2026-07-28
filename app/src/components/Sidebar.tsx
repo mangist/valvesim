@@ -1,10 +1,11 @@
 import { ControlSlider } from './ControlSlider';
-import { PalettePanel, type PlaceHandler } from './PalettePanel';
+import { PalettePanel, type NewComponentHandler, type PlaceHandler } from './PalettePanel';
 
 interface SidebarProps {
   onGridSizeChange?: (size: number) => void;
   onPlaceComponent?: PlaceHandler;
   onPaletteDragStateChange?: (dragging: boolean) => void;
+  onNewComponent?: NewComponentHandler;
 }
 
 /**
@@ -18,11 +19,16 @@ export function Sidebar({
   onGridSizeChange,
   onPlaceComponent,
   onPaletteDragStateChange,
+  onNewComponent,
 }: SidebarProps) {
   return (
     <aside className="vs-sidebar">
       <h2>Components</h2>
-      <PalettePanel onPlace={onPlaceComponent} onDragStateChange={onPaletteDragStateChange} />
+      <PalettePanel
+        onPlace={onPlaceComponent}
+        onDragStateChange={onPaletteDragStateChange}
+        onNewComponent={onNewComponent}
+      />
 
       <h2>Inspector</h2>
       <ControlSlider
