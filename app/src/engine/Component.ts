@@ -3,8 +3,18 @@ import { SVGScene } from '@pixi-essentials/svg';
 import type { Viewport } from './Viewport';
 
 const COLOR_PIN = 0xff9f1c; // Amber / Filament Glow
-const COLOR_PIN_IDLE = 0x8a8f9a; // unwired terminal
+const COLOR_PIN_IDLE = 0xb9bec7; // unwired terminal (matches the tube/transformer pin fill)
+const COLOR_PIN_STROKE = 0x6e747e;
 const COLOR_SELECT = 0xeaf2ef; // Off-White Cream
+
+/**
+ * Standard pin dot radius/stroke, in final on-screen units (pre viewport
+ * zoom). Every component normalizes its pin views to this constant size
+ * via `normalizePinScale()` so a pin looks the same regardless of how
+ * large or small that component's own symbol art is drawn.
+ */
+const PIN_RADIUS = 9;
+const PIN_STROKE_WIDTH = 2;
 
 /**
  * A named electrical terminal on a component.
@@ -129,6 +139,18 @@ export abstract class SchematicComponent extends Container {
   /** Redraw pin terminal dots — call after a wire changes a pin's net. */
   refreshPins(): void {
     this.drawPins();
+  }
+
+  /**
+   * Normalize every pin view to a constant final size, canceling out this
+   * component's own symbol scale (set from `heightIn` vs. the SVG's
+   * bounds). Call once after that scale is known — e.g. at the end of
+   * `PlacedComponent.load()` — so a pin looks the same size on every
+   * component regardless of how physically large its symbol art is.
+   */
+  protected normalizePinScale(scale: number): void {
+    const inv = scale ? 1 / scale : 1;
+    for (const view of this.pinViews) view.scale.set(inv);
   }
 
   /** Show/hide name callouts for every pin (hover any pin to identify all). */
@@ -269,7 +291,7 @@ class PinView extends Graphics {
     this.position.set(pin.x, pin.y);
     this.eventMode = 'static';
     this.cursor = 'crosshair';
-    this.hitArea = new Circle(0, 0, 10);
+    this.hitArea = new Circle(0, 0, PIN_RADIUS + 4);
     this.on('pointerover', () => {
       this.hovered = true;
       this.refresh();
@@ -286,11 +308,13 @@ class PinView extends Graphics {
 
   refresh(): void {
     this.clear();
+    const fill = this.pin.net ? COLOR_PIN : COLOR_PIN_IDLE;
+    this.circle(0, 0, PIN_RADIUS).fill(fill).stroke({
+      color: COLOR_PIN_STROKE,
+      width: PIN_STROKE_WIDTH,
+    });
     if (this.hovered) {
-      this.circle(0, 0, 9).stroke({ color: COLOR_PIN, width: 2 });
-      this.circle(0, 0, 5).fill(COLOR_PIN);
-    } else {
-      this.circle(0, 0, 4.5).fill(this.pin.net ? COLOR_PIN : COLOR_PIN_IDLE);
+      this.circle(0, 0, PIN_RADIUS + 4).stroke({ color: COLOR_PIN, width: 2 });
     }
   }
 }

@@ -103,6 +103,7 @@ export class PlacedComponent extends SchematicComponent {
     if (b.height > 0) {
       this.scale.set((this.model.heightIn * PIXELS_PER_INCH) / b.height);
     }
+    this.normalizePinScale(this.scale.x);
 
     this.buildLabel(b);
   }

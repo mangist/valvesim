@@ -5,7 +5,11 @@
     style as the other symbols; solid fills only (the canvas SVG parser
     ignores fill-opacity/stroke-opacity/opacity).
 
-    Single wire attachment point at the top of the lead: id="pin-gnd".
+    The pin dot itself is NOT drawn here — every component's wire
+    attachment points are rendered by the shared PinView in
+    engine/Component.ts, sized/styled consistently across all symbols.
+    This element only marks the attachment position via id="pin-gnd"
+    and cx/cy; it stays invisible (fill/stroke "none").
   -->
   <g stroke="#CDD6D2" stroke-width="10" stroke-linecap="square">
     <line x1="100" y1="20" x2="100" y2="130" />
@@ -14,5 +18,5 @@
     <line x1="85" y1="190" x2="115" y2="190" />
   </g>
 
-  <circle id="pin-gnd" cx="100" cy="20" r="10" fill="#CDD6D2" stroke="#6E747E" stroke-width="2" />
+  <circle id="pin-gnd" cx="100" cy="20" r="1" fill="none" stroke="none" />
 </svg>
