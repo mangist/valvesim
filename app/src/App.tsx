@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import './App.css';
 import { Sidebar } from './components/Sidebar';
+import { PinContextMenu } from './components/PinContextMenu';
 import { Viewport } from './engine/Viewport';
 import { PlacedComponent, REFDES_PREFIX } from './engine/PlacedComponent';
 import { WireTool } from './engine/WireTool';
 import type { PlacedWire } from './engine/PlacedWire';
+import type { Pin } from './engine/Component';
+import type { WireKind } from './engine/wireGauges';
 import { buildDemoNetlist } from './simulation/demo';
 import { getComponentById, type ComponentModel } from './library';
 import type { SpiceRequest, SpiceResponse } from './simulation/spice.worker';
@@ -34,6 +37,13 @@ export default function App() {
     x: number;
     y: number;
     value: string;
+  } | null>(null);
+  /** Active right-click wire-type/gauge menu, anchored at a pin. */
+  const [pinMenu, setPinMenu] = useState<{
+    component: PlacedComponent;
+    pin: Pin;
+    x: number;
+    y: number;
   } | null>(null);
 
   // Mount the PixiJS canvas pipeline into the canvas host element
@@ -141,6 +151,13 @@ export default function App() {
       }
     };
 
+    // Right-click a pin: choose wire type/gauge before starting the wire.
+    // (Ignored while a wire is already in hand — one context at a time.)
+    instance.onPinContextMenu = (component, pin, clientX, clientY) => {
+      if (wireToolRef.current?.isActive) return;
+      setPinMenu({ component: component as PlacedComponent, pin, x: clientX, y: clientY });
+    };
+
     instance
       .load()
       .then(() => setStatusText(`Placed ${instance.refDes} — ${model.name} · ${instance.guid}`))
@@ -189,6 +206,19 @@ export default function App() {
         `Netlist error: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
+  };
+
+  /** Start a wire from the right-clicked pin with the chosen type/gauge. */
+  const chooseWire = (kind: WireKind, gaugeAwg: number) => {
+    const menu = pinMenu;
+    setPinMenu(null);
+    if (!menu) return;
+    const tool = wireToolRef.current;
+    if (!tool) return;
+    tool.startFromPin(menu.component, menu.pin, { kind, gaugeAwg });
+    setStatusText(
+      `Wiring ${kind} ${gaugeAwg} AWG from ${menu.component.refDes} pin ${menu.pin.id} (${menu.pin.name}) — click a pin to connect, or canvas to drop`,
+    );
   };
 
   /** Close the label editor, optionally committing the typed name. */
@@ -255,6 +285,15 @@ export default function App() {
           />
         )}
       </main>
+
+      {pinMenu && (
+        <PinContextMenu
+          x={pinMenu.x}
+          y={pinMenu.y}
+          onSelect={chooseWire}
+          onClose={() => setPinMenu(null)}
+        />
+      )}
 
       <footer className="vs-statusbar">
         <span className={simState === 'done' ? 'vs-status-ok' : undefined}>

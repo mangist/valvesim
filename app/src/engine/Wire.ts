@@ -2,6 +2,7 @@ import { Graphics, Ticker } from 'pixi.js';
 import Vector from 'verlyjs/src/Vector.js';
 import Point from 'verlyjs/src/Point.js';
 import Stick from 'verlyjs/src/Stick.js';
+import { DEFAULT_WIRE_GAUGE_AWG, gaugeStrokeWidth } from './wireGauges';
 
 // Verly.js source modules reference `Vector` as a global (its bundle entry
 // assigns the classes to `window`). Provide it before any Point/Stick math.
@@ -40,6 +41,9 @@ export class Wire extends Graphics {
 
   /** Carries current → rendered in full filament glow. */
   live = true;
+
+  /** AWG gauge — purely cosmetic for now, drives the rendered stroke width. */
+  gaugeAwg: number = DEFAULT_WIRE_GAUGE_AWG;
 
   protected points: Point[] = [];
   protected sticks: Stick[] = [];
@@ -166,7 +170,7 @@ export class Wire extends Graphics {
     this.lineTo(last.pos.x, last.pos.y);
     this.stroke({
       color: this.live ? COLOR_WIRE : COLOR_WIRE_IDLE,
-      width: 3,
+      width: gaugeStrokeWidth(this.gaugeAwg),
       cap: 'round',
       join: 'round',
     });

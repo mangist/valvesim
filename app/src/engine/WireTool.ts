@@ -4,6 +4,13 @@ import type { Viewport } from './Viewport';
 import type { Pin } from './Component';
 import type { PlacedComponent } from './PlacedComponent';
 import type { ComponentModel } from '../library';
+import { DEFAULT_WIRE_GAUGE_AWG, DEFAULT_WIRE_KIND, type WireKind } from './wireGauges';
+
+/** Wire type/gauge chosen from the pin context menu (or the left-click default). */
+export interface WireChoice {
+  kind?: WireKind;
+  gaugeAwg?: number;
+}
 
 /**
  * Interactive wiring tool.
@@ -31,12 +38,18 @@ export class WireTool {
     return this.wire !== null;
   }
 
-  /** Begin a wire at a component pin (its world position); locks endpoint 0. */
-  startFromPin(component: PlacedComponent, pin: Pin): void {
+  /**
+   * Begin a wire at a component pin (its world position); locks endpoint 0.
+   * `choice` picks the wire type/gauge (from the right-click pin menu) —
+   * defaults to loose 22 AWG, matching a plain left-click start.
+   */
+  startFromPin(component: PlacedComponent, pin: Pin, choice?: WireChoice): void {
     if (this.wire) return;
 
     const pos = this.pinWorldPos(component, pin);
     const wire = new PlacedWire(this.wireModel, pos.x, pos.y, pos.x, pos.y);
+    wire.kind = choice?.kind ?? DEFAULT_WIRE_KIND;
+    wire.gaugeAwg = choice?.gaugeAwg ?? DEFAULT_WIRE_GAUGE_AWG;
     this.viewport.world.addChild(wire);
     wire.attach(this.viewport.app.ticker);
     this.wire = wire;

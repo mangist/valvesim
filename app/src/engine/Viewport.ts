@@ -70,6 +70,8 @@ export class Viewport {
     this.app.stage.on('pointerup', this.onPointerUp);
     this.app.stage.on('pointerupoutside', this.onPointerUp);
     this.app.canvas.addEventListener('wheel', this.onWheel, { passive: false });
+    // Right-click drives the pin wire-type menu, not the OS/browser context menu
+    this.app.canvas.addEventListener('contextmenu', this.onContextMenu);
 
     this.resizeObserver = new ResizeObserver(() => this.drawGrid());
     this.resizeObserver.observe(host);
@@ -102,6 +104,7 @@ export class Viewport {
     this.resizeObserver = null;
     if (this.app.renderer) {
       this.app.canvas.removeEventListener('wheel', this.onWheel);
+      this.app.canvas.removeEventListener('contextmenu', this.onContextMenu);
       this.app.destroy(true, { children: true });
     }
     this.host = null;
@@ -134,6 +137,10 @@ export class Viewport {
 
   private onPointerUp = () => {
     this.dragging = false;
+  };
+
+  private onContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
   };
 
   // ---------- zoom ----------

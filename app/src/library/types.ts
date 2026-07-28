@@ -51,7 +51,10 @@ export interface PinDefinition {
 // use formatEng() for µF/pF-style display.
 
 export interface WireProperties {
-  gauge?: string; // e.g. "20 AWG"
+  /** Default gauge for wires drawn from this catalog entry (see engine/wireGauges.ts). */
+  gaugeAwg?: number;
+  /** Default type: draping/physics-sagged, or rigid bus wire. */
+  kind?: 'loose' | 'rigid';
   insulation?: string;
 }
 

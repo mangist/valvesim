@@ -29,3 +29,78 @@
 .vs-status-hint {
   margin-left: auto;
 }
+
+/* Right-click pin menu: wire type (Loose/Rigid), each with an AWG-gauge
+   submenu. Position comes from --vs-menu-x/--vs-menu-y (viewport/client
+   coordinates of the right-click), set by App. */
+.vs-pin-menu {
+  position: fixed;
+  left: var(--vs-menu-x);
+  top: var(--vs-menu-y);
+  z-index: 30;
+  background: var(--vs-bg-raised);
+  border: 1px solid var(--vs-border);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 130px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 13px;
+  user-select: none;
+}
+
+.vs-pin-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  color: var(--vs-cream);
+  cursor: pointer;
+}
+
+.vs-pin-menu-item:hover {
+  background: var(--vs-bg-inset);
+  color: var(--vs-glow);
+}
+
+.vs-pin-menu-arrow {
+  color: var(--vs-text-muted);
+}
+
+.vs-pin-menu-item:hover .vs-pin-menu-arrow {
+  color: var(--vs-glow);
+}
+
+/* Submenu: hidden until its parent item is hovered */
+.vs-pin-submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: -4px;
+  background: var(--vs-bg-raised);
+  border: 1px solid var(--vs-border);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 90px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.vs-pin-menu-item:hover .vs-pin-submenu {
+  display: block;
+}
+
+.vs-pin-submenu-item {
+  padding: 7px 10px;
+  border-radius: 5px;
+  color: var(--vs-cream);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vs-pin-submenu-item:hover {
+  background: var(--vs-bg-inset);
+  color: var(--vs-glow);
+}

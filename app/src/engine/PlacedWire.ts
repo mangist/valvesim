@@ -1,4 +1,5 @@
 import { Wire } from './Wire';
+import { DEFAULT_WIRE_GAUGE_AWG, DEFAULT_WIRE_KIND, type WireKind } from './wireGauges';
 import type { ComponentModel } from '../library';
 
 /** A wire endpoint's electrical attachment (component pin), when connected. */
@@ -17,6 +18,13 @@ export class PlacedWire extends Wire {
   readonly model: ComponentModel;
   refDes = '';
 
+  /**
+   * Loose (draping, physics-sagged) or rigid (bus wire). Rigid doesn't have
+   * its own stiff/straight physics yet — recorded now so that behavior can
+   * key off it once it's built; today both render/behave identically.
+   */
+  kind: WireKind = DEFAULT_WIRE_KIND;
+
   /** Pin the wire started from. */
   from: WireAttachment | null = null;
   /** Pin the wire ends on (null until wiring-to-pin locking lands). */
@@ -33,6 +41,7 @@ export class PlacedWire extends Wire {
     super(x1, y1, x2, y2);
     this.model = model;
     this.guid = guid;
+    this.gaugeAwg = DEFAULT_WIRE_GAUGE_AWG;
   }
 
   /** Serializable state (schematic JSONB shape for save/load). */
@@ -40,6 +49,8 @@ export class PlacedWire extends Wire {
     guid: string;
     componentId: string;
     refDes: string;
+    kind: WireKind;
+    gaugeAwg: number;
     net: string | null;
     from: WireAttachment | null;
     to: WireAttachment | null;
@@ -49,6 +60,8 @@ export class PlacedWire extends Wire {
       guid: this.guid,
       componentId: this.model.id,
       refDes: this.refDes,
+      kind: this.kind,
+      gaugeAwg: this.gaugeAwg,
       net: this.net,
       from: this.from,
       to: this.to,

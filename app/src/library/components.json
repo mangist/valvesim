@@ -11,7 +11,8 @@
       "height": 0.08,
       "pins": [],
       "properties": {
-        "gauge": "20 AWG",
+        "gaugeAwg": 22,
+        "kind": "loose",
         "insulation": "cloth"
       }
     },
