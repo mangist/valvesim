@@ -59,12 +59,17 @@ export interface ResistorProperties {
   resistance: number; // ohms
   powerRating?: number; // watts
   tolerance?: number; // percent
+  /** Construction/subcategory, e.g. "carbon-comp", "carbon-film", "metal-film", "wirewound". */
+  resistorType?: string;
 }
 
 export interface CapacitorProperties {
   capacitance: number; // farads
   voltageRating?: number; // volts DC
-  dielectric?: string; // "electrolytic", "film", "ceramic"…
+  /** Construction/subcategory, e.g. "electrolytic", "ceramic", "polyester-film". */
+  dielectric?: string;
+  /** Lead style: both leads from one end/side ("radial") or one from each end ("axial"). */
+  orientation?: 'axial' | 'radial';
 }
 
 export interface InductorProperties {
