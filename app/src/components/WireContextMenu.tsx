@@ -41,9 +41,20 @@ export function WireContextMenu({
         onClose();
       }
     };
+    // The right-click that opens this menu is a native pointerdown on the
+    // canvas that's still bubbling to `window` at the moment this effect
+    // runs (Pixi's Federated event dispatch — which calls onContextMenu →
+    // this component mounting — happens synchronously inside that same
+    // native event's handling, before it finishes bubbling up). Attaching
+    // the "outside click" listener immediately lets it catch that same
+    // opening click and close the menu instantly. Deferring attachment to
+    // the next task lets the current event finish first.
+    const id = window.setTimeout(() => {
+      window.addEventListener('pointerdown', onPointerDown);
+    }, 0);
     window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('pointerdown', onPointerDown);
     return () => {
+      window.clearTimeout(id);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('pointerdown', onPointerDown);
     };

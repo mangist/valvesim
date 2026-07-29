@@ -16,8 +16,20 @@
     <path d="M 140 92 C 156 118, 166 138, 160 164 L 160 250" />
   </g>
 
-  <!-- capsule body -->
-  <rect x="30" y="8" width="160" height="88" rx="44" fill="#D9502A" stroke="#7A2A13" stroke-width="3" />
+  <!-- capsule body (bezier-only stadium/pill shape — no rect rx / SVG arc
+       commands, which @pixi-essentials/svg mis-renders as malformed,
+       self-intersecting geometry; same fix pattern as the tube dome and
+       resistor bodies elsewhere in this library) -->
+  <path
+       d="M 74 8
+       L 146 8
+       C 170.3 8 190 27.7 190 52
+       C 190 76.3 170.3 96 146 96
+       L 74 96
+       C 49.7 96 30 76.3 30 52
+       C 30 27.7 49.7 8 74 8
+       Z"
+       fill="#D9502A" stroke="#7A2A13" stroke-width="3" />
   <!-- crimped foil ends (darker bands near the rounded caps).
        Bezier curves, not SVG arc ('A') commands — @pixi-essentials/svg
        renders elliptical arcs as malformed/self-intersecting geometry in

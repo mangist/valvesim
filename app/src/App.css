@@ -64,6 +64,29 @@
   box-shadow: 0 0 10px rgba(156, 74, 66, 0.4);
 }
 
+/* Live-solver running-time readout, next to Play/Stop. Monospace so the
+   digits don't jitter the layout as they tick up. */
+.vs-sim-clock {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 6px 12px;
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vs-text-muted);
+  background: var(--vs-bg-inset);
+  border: 1px solid var(--vs-border);
+  border-radius: 6px;
+  min-width: 64px;
+  justify-content: center;
+}
+
+.vs-sim-clock-active {
+  color: #a8e6b8;
+  border-color: #4a8a5e;
+}
+
 /* Load/Save sit at the far right, a button's width away from the transport */
 .vs-btn-load {
   margin-left: 96px;

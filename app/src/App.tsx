@@ -3,6 +3,7 @@ import './App.css';
 import { Sidebar } from './components/Sidebar';
 import { PinContextMenu } from './components/PinContextMenu';
 import { WireContextMenu } from './components/WireContextMenu';
+import { ComponentContextMenu } from './components/ComponentContextMenu';
 import { Viewport } from './engine/Viewport';
 import { PlacedComponent, REFDES_PREFIX } from './engine/PlacedComponent';
 import { WireTool } from './engine/WireTool';
@@ -10,9 +11,40 @@ import { PlacedWire } from './engine/PlacedWire';
 import { buildDesignFile, parseDesignFile, type DesignFile, type SavedWire } from './engine/design';
 import type { Pin } from './engine/Component';
 import type { WireKind } from './engine/wireGauges';
-import { buildLiveNetlist, readProbes, type LiveProbe } from './simulation/liveMeters';
+import { buildLiveNetlist, readProbes, readWaveforms, type LiveProbe } from './simulation/liveMeters';
 import { getComponentById, type ComponentModel } from './library';
 import type { SpiceRequest, SpiceResponse } from './simulation/spice.worker';
+
+/**
+ * The live solver re-solves from t=0 out to how long Play has been
+ * running (not a fixed short window) so slow transients (e.g. a
+ * transformer's L/R turn-on inrush) actually decay to their real
+ * steady-state reading instead of being sampled mid-inrush every tick.
+ * Capped so a long Play session doesn't grow the per-tick solve time
+ * without bound — circuits in this library settle well within the cap.
+ */
+const MIN_LIVE_SIM_SECONDS = 0.05;
+const MAX_LIVE_SIM_SECONDS = 5;
+/**
+ * How often the solver is asked to tick — the *display* refresh rate for
+ * simple circuits. A heavier circuit's own solve time (which can exceed
+ * this) naturally throttles it further; see the solve-budget controller
+ * below, which is the thing that actually keeps latency in check.
+ */
+const LIVE_TICK_MS = 250;
+/**
+ * Target wall-clock time per solve. The simulated duration requested each
+ * tick (`simSeconds`) is adjusted so the solve itself keeps landing near
+ * this budget: as long as solves come in under budget, the window keeps
+ * growing (toward MAX_LIVE_SIM_SECONDS) so simple circuits still fully
+ * settle; once a solve blows the budget (e.g. a stiff coupled-inductor
+ * transformer model), the window is backed off proportionally so the next
+ * solve lands back near the target instead of repeating a multi-second
+ * stall. This trades perfect settling for responsiveness on expensive
+ * circuits — the reading converges to "as settled as fits in the budget,"
+ * not necessarily the full 5×τ ideal.
+ */
+const SOLVE_BUDGET_MS = 1200;
 
 export default function App() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -26,6 +58,13 @@ export default function App() {
   /** Live metering: probes of the in-flight solve + re-entrancy guard. */
   const liveProbesRef = useRef<LiveProbe[]>([]);
   const liveBusyRef = useRef(false);
+  const liveSimStartRef = useRef(performance.now());
+  /** Solve-budget controller state — see SOLVE_BUDGET_MS above. */
+  const liveSolveStartRef = useRef(0);
+  const lastSolveMsRef = useRef(0);
+  const targetSimSecondsRef = useRef(MIN_LIVE_SIM_SECONDS);
+  /** Wall-clock display of how long the solver has been running Play — updates faster than the solve cadence so it reads as live. */
+  const [liveElapsedLabel, setLiveElapsedLabel] = useState('0.0s');
   /** Real-time simulation transport (Play/Stop). Ref mirrors state for the tick. */
   const [simRunning, setSimRunning] = useState(true);
   const simRunningRef = useRef(true);
@@ -55,6 +94,12 @@ export default function App() {
   /** Active right-click menu on a placed wire's body. */
   const [wireMenu, setWireMenu] = useState<{
     wire: PlacedWire;
+    x: number;
+    y: number;
+  } | null>(null);
+  /** Active right-click delete menu on a component's body. */
+  const [componentMenu, setComponentMenu] = useState<{
+    component: PlacedComponent;
     x: number;
     y: number;
   } | null>(null);
@@ -192,6 +237,26 @@ export default function App() {
     instance.onSwitchToggle = (component, on) => {
       setStatusText(`${component.refDes} (${component.label}) power ${on ? 'ON' : 'OFF'}`);
     };
+
+    // Right-click the component body: open its delete menu.
+    // (Ignored while a wire is already in hand — one context at a time.)
+    instance.onContextMenu = (component, clientX, clientY) => {
+      if (wireToolRef.current?.isActive) return;
+      setComponentMenu({ component: component as PlacedComponent, x: clientX, y: clientY });
+    };
+  };
+
+  /** Component right-click menu: remove it and every wire attached to one of its pins. */
+  const deleteComponent = (instance: PlacedComponent) => {
+    for (const [guid, wire] of [...wiresRef.current.entries()]) {
+      if (wire.from?.componentGuid === instance.guid || wire.to?.componentGuid === instance.guid) {
+        wiresRef.current.delete(guid);
+        wire.destroy();
+      }
+    }
+    instancesRef.current.delete(instance.guid);
+    instance.destroy();
+    setStatusText(`Deleted ${instance.refDes} (${instance.model.name})`);
   };
 
   /** Right-click a wire's body: open its Loose/Rigid + AWG + delete menu. */
@@ -369,6 +434,15 @@ export default function App() {
     }
   };
 
+  /** New button: wipe the canvas after confirming the user is OK losing unsaved work. */
+  const newDesign = () => {
+    if (!window.confirm('Start a new design? Any unsaved changes on the canvas will be lost.')) {
+      return;
+    }
+    clearCanvas();
+    setStatusText('New design — canvas cleared');
+  };
+
   /** Lazily create the shared SPICE worker (runs are serialized inside it). */
   const ensureWorker = (): Worker => {
     if (!workerRef.current) {
@@ -378,7 +452,7 @@ export default function App() {
       );
       workerRef.current.onmessage = (e: MessageEvent<SpiceResponse>) => {
         const msg = e.data;
-        // 500ms live-meter solves route to the displays, silently
+        // Live-meter solves route to the displays, silently
         if (msg.tag === 'live') {
           // ignore a straggler result that lands after the user hit Stop
           if (msg.type === 'result' && simRunningRef.current) {
@@ -386,8 +460,18 @@ export default function App() {
             for (const [guid, value] of readings) {
               instancesRef.current.get(guid)?.setMeterValue(value);
             }
+            const waveforms = readWaveforms(msg.data, liveProbesRef.current);
+            for (const [guid, waveform] of waveforms) {
+              instancesRef.current.get(guid)?.setWaveform(waveform.time, waveform.values);
+            }
           }
-          if (msg.type !== 'progress') liveBusyRef.current = false;
+          if (msg.type !== 'progress') {
+            liveBusyRef.current = false;
+            // Feeds the solve-budget controller (see the tick loop below) —
+            // recorded for both a result and an error, since either way
+            // this is how long that requested duration actually took.
+            lastSolveMsRef.current = performance.now() - liveSolveStartRef.current;
+          }
           return;
         }
         // untagged runs (none in the UI anymore) — log for debugging
@@ -401,19 +485,45 @@ export default function App() {
     return workerRef.current;
   };
 
-  // Background solver: every 500ms, re-solve the canvas circuit and push
-  // fresh readings to the meter displays. Skips ticks while a solve is in
-  // flight, and does nothing until a powered AC inlet exists.
+  // Background solver: up to 4×/sec, re-solve the canvas circuit — from
+  // t=0 out to a duration chosen by the solve-budget controller — and push
+  // fresh readings to the meter displays. The solver itself thus runs
+  // continuously for the whole Play session (a growing transient, not a
+  // fixed short one restarted from scratch); any wire/circuit change is
+  // picked up on the very next tick since the netlist is rebuilt from the
+  // live instances each time. Skips ticks while a solve is in flight, and
+  // does nothing until a powered AC inlet exists.
   useEffect(() => {
     const tick = async () => {
       if (!simRunningRef.current) return; // transport stopped (Play/Stop)
       if (liveBusyRef.current) return;
       const instances = [...instancesRef.current.values()];
       try {
-        const live = await buildLiveNetlist(instances);
+        const elapsedSec = (performance.now() - liveSimStartRef.current) / 1000;
+        const ceiling = Math.min(MAX_LIVE_SIM_SECONDS, Math.max(MIN_LIVE_SIM_SECONDS, elapsedSec));
+        // Solve-budget controller: while solves land under budget, grow the
+        // target gradually toward the ceiling (full settling for circuits
+        // cheap enough to afford it) — capped per-tick growth so backing off
+        // from an over-budget solve doesn't immediately snap back up and
+        // retrigger the same overshoot. Once a solve blows the budget, back
+        // the target off proportionally so the next one lands back near
+        // budget instead of repeating the same overshoot.
+        const simSeconds =
+          lastSolveMsRef.current === 0 || lastSolveMsRef.current <= SOLVE_BUDGET_MS
+            ? Math.min(ceiling, targetSimSecondsRef.current * 1.5 + 0.1)
+            : Math.min(
+                ceiling,
+                Math.max(
+                  MIN_LIVE_SIM_SECONDS,
+                  targetSimSecondsRef.current * (SOLVE_BUDGET_MS / lastSolveMsRef.current) * 0.85,
+                ),
+              );
+        targetSimSecondsRef.current = simSeconds;
+        const live = await buildLiveNetlist(instances, simSeconds);
         if (!live || live.probes.length === 0) return;
         liveBusyRef.current = true;
         liveProbesRef.current = live.probes;
+        liveSolveStartRef.current = performance.now();
         ensureWorker().postMessage({
           type: 'run',
           netlist: live.netlist,
@@ -423,13 +533,28 @@ export default function App() {
         liveBusyRef.current = false; // malformed circuit — try again next tick
       }
     };
-    const id = setInterval(tick, 500);
+    const id = setInterval(tick, LIVE_TICK_MS);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Play: resume the 500ms real-time solve loop. */
+  // Ticks the header's running-time readout faster than the solve cadence
+  // (so it visibly counts up in real time) while Play is active.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!simRunningRef.current) return;
+      const elapsedSec = (performance.now() - liveSimStartRef.current) / 1000;
+      setLiveElapsedLabel(`${elapsedSec.toFixed(1)}s`);
+    }, 100);
+    return () => clearInterval(id);
+  }, []);
+
+  /** Play: resume the continuous real-time solve loop from a fresh t=0. */
   const startLiveSim = () => {
+    liveSimStartRef.current = performance.now();
+    setLiveElapsedLabel('0.0s');
+    lastSolveMsRef.current = 0;
+    targetSimSecondsRef.current = MIN_LIVE_SIM_SECONDS;
     simRunningRef.current = true;
     setSimRunning(true);
     setStatusText('Real-time simulation running');
@@ -439,6 +564,10 @@ export default function App() {
   const stopLiveSim = () => {
     simRunningRef.current = false;
     setSimRunning(false);
+    liveSimStartRef.current = performance.now();
+    setLiveElapsedLabel('0.0s');
+    lastSolveMsRef.current = 0;
+    targetSimSecondsRef.current = MIN_LIVE_SIM_SECONDS;
     for (const inst of instancesRef.current.values()) {
       inst.setMeterValue(0);
     }
@@ -499,6 +628,12 @@ export default function App() {
             </svg>
             Stop
           </button>
+          <span
+            className={`vs-sim-clock ${simRunning ? 'vs-sim-clock-active' : ''}`}
+            title="Total time the live solver has been running this Play session"
+          >
+            {liveElapsedLabel}
+          </span>
           <button
             className="vs-btn vs-btn-transport vs-btn-load"
             onClick={() => loadInputRef.current?.click()}
@@ -531,6 +666,23 @@ export default function App() {
               />
             </svg>
             Save
+          </button>
+          <button
+            className="vs-btn vs-btn-transport vs-btn-new"
+            onClick={newDesign}
+            title="Clear the canvas and start a new design"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path
+                d="M 2 1.5 L 9 1.5 L 12 4.5 L 12 12.5 L 2 12.5 Z M 9 1.5 L 9 4.5 L 12 4.5 M 7 6.5 L 7 10.5 M 5 8.5 L 9 8.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            New
           </button>
           <input
             ref={loadInputRef}
@@ -601,6 +753,15 @@ export default function App() {
           onAddAnchor={addWireAnchor}
           onDelete={deleteWire}
           onClose={() => setWireMenu(null)}
+        />
+      )}
+
+      {componentMenu && (
+        <ComponentContextMenu
+          x={componentMenu.x}
+          y={componentMenu.y}
+          onDelete={() => deleteComponent(componentMenu.component)}
+          onClose={() => setComponentMenu(null)}
         />
       )}
 

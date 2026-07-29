@@ -58,6 +58,8 @@ export abstract class SchematicComponent extends Container {
   onPinDown?: (component: SchematicComponent, pin: Pin) => void;
   /** Invoked on right-click of a pin — App shows the wire type/gauge menu. */
   onPinContextMenu?: (component: SchematicComponent, pin: Pin, clientX: number, clientY: number) => void;
+  /** Invoked on right-click of the component body — App shows the delete menu. */
+  onContextMenu?: (component: SchematicComponent, clientX: number, clientY: number) => void;
 
   protected symbol: Container | null = null;
   protected pinLayer = new Graphics();
@@ -269,6 +271,15 @@ export abstract class SchematicComponent extends Container {
   private onDragStart = (e: FederatedPointerEvent) => {
     if (!this.parent) return;
     e.stopPropagation(); // don't pan the viewport underneath
+    // Branch on the raw button rather than Pixi's specialized 'rightdown'
+    // event, which only fires for pointerType 'mouse'/'pen' — see PinView's
+    // identical comment. Right-click opens the delete menu instead of
+    // starting a drag.
+    if (e.button === 2) {
+      e.preventDefault(); // suppress the browser's native context menu
+      this.onContextMenu?.(this, e.clientX, e.clientY);
+      return;
+    }
     const local = this.parent.toLocal(e.global);
     this.dragOffset = { x: local.x - this.x, y: local.y - this.y };
   };

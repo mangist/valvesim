@@ -21,6 +21,13 @@
     fill-opacity/stroke-opacity/opacity.
   -->
 
+  <!-- Panel's actual visual rectangle (outer stroke edge) — read by
+       PlacedComponent.buildInletMeter to attach the current-draw readout
+       flush to the panel bottom. The container's overall bounds equal the
+       full viewBox (0,0-420,200), not this ink extent, so this marker is
+       needed to avoid a gap below the blank viewBox margin. -->
+  <rect id="panel-body" x="38" y="28" width="344" height="144" fill="none" stroke="none" />
+
   <!-- ==================== mounting ears / screw bosses ==================== -->
   <g stroke-width="2">
     <circle cx="60" cy="50" r="11" fill="#B9BEC7" stroke="#6E747E" />
@@ -80,24 +87,26 @@
   <circle cx="290" cy="122" r="7" fill="#3A3F47" stroke="#57606B" stroke-width="1.5" />
 
   <!-- ==================== pin leads ==================== -->
-  <!-- left blade slot -> L, right blade slot -> N, ground hole -> PE -->
+  <!-- left blade slot -> L, right blade slot -> N, ground hole -> PE.
+       Pins are spaced 50 apart (was 30) so their fixed on-screen radius
+       (independent of this symbol's scale) doesn't overlap. -->
   <g stroke-width="4">
-    <line x1="258" y1="80"  x2="392" y2="70"  stroke="#7A4A2B" />
+    <line x1="258" y1="80"  x2="392" y2="50"  stroke="#7A4A2B" />
     <line x1="322" y1="80"  x2="392" y2="100" stroke="#3A6BC6" />
-    <line x1="290" y1="122" x2="392" y2="130" stroke="#3E9B4F" />
+    <line x1="290" y1="122" x2="392" y2="150" stroke="#3E9B4F" />
   </g>
   <!-- PE 45° tracer stripe (green/yellow dual-color earth lead) -->
   <g stroke="#E8C33A" stroke-width="3">
-    <line x1="356" y1="132" x2="360" y2="128" />
-    <line x1="363" y1="132" x2="367" y2="128" />
-    <line x1="370" y1="132" x2="374" y2="128" />
-    <line x1="377" y1="132" x2="381" y2="128" />
+    <line x1="356" y1="152" x2="360" y2="148" />
+    <line x1="363" y1="152" x2="367" y2="148" />
+    <line x1="370" y1="152" x2="374" y2="148" />
+    <line x1="377" y1="152" x2="381" y2="148" />
   </g>
 
   <!-- ==================== pins ==================== -->
   <g stroke-width="2.5">
-    <circle id="pin-l"  cx="398" cy="70"  r="9" fill="#7A4A2B" stroke="#15100C" />
+    <circle id="pin-l"  cx="398" cy="50"  r="9" fill="#7A4A2B" stroke="#15100C" />
     <circle id="pin-n"  cx="398" cy="100" r="9" fill="#3A6BC6" stroke="#15100C" />
-    <circle id="pin-pe" cx="398" cy="130" r="9" fill="#3E9B4F" stroke="#15100C" />
+    <circle id="pin-pe" cx="398" cy="150" r="9" fill="#3E9B4F" stroke="#15100C" />
   </g>
 </svg>

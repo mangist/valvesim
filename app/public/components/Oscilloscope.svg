@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1020">
+  <!--
+    Single-channel panel oscilloscope: dark bezel around a 4"x4" CRT
+    screen (id="scope-screen"), same P/N terminal style as the Voltmeter.
+    The green trace + on-screen stats are NOT baked in — PlacedComponent
+    fits a live OscilloscopeDisplay into the scope-screen window, updated
+    by the background solver. Rounded corners are cubic-bezier paths (no
+    rect rx / SVG arcs — @pixi-essentials/svg mis-renders them).
+
+    NOTE: solid colors only — the canvas SVG parser ignores
+    fill-opacity/stroke-opacity/opacity.
+  -->
+
+  <!-- terminal leads -->
+  <line x1="300" y1="940" x2="300" y2="985" stroke="#C33B2E" stroke-width="6" />
+  <line x1="600" y1="940" x2="600" y2="985" stroke="#3A3F47" stroke-width="6" />
+
+  <!-- bezel (r=24 bezier corners) -->
+  <path
+       d="M 44 20
+       L 856 20
+       C 869.2 20 880 30.8 880 44
+       L 880 916
+       C 880 929.2 869.2 940 856 940
+       L 44 940
+       C 30.8 940 20 929.2 20 916
+       L 20 44
+       C 20 30.8 30.8 20 44 20
+       Z"
+       fill="#1B1B1E" stroke="#CDD6D2" stroke-width="4" />
+
+  <!-- CRT screen (4"x4" at 200 units/inch) — live trace + stats overlay is fitted to this rect -->
+  <rect id="scope-screen" x="50" y="50" width="800" height="800" fill="#081208" stroke="#33333D" stroke-width="3" />
+
+  <!-- Y-scale mode switch marker (bottom-right of the CRT glass): read by
+       PlacedComponent, drawn as a clickable Pixi overlay toggling the
+       vertical scale between auto-fit and a fixed 1V/div. -->
+  <rect id="yscale-switch" x="610" y="730" width="210" height="90" fill="none" stroke="none" />
+
+  <!-- terminal bosses on the bezel underside -->
+  <circle cx="300" cy="895" r="18" fill="#C33B2E" stroke="#7A1F18" stroke-width="2" />
+  <circle cx="600" cy="895" r="18" fill="#26262E" stroke="#57606B" stroke-width="2" />
+
+  <!-- pins -->
+  <g stroke-width="2.5">
+    <circle id="pin-p" cx="300" cy="1000" r="9" fill="#C33B2E" stroke="#15100C" />
+    <circle id="pin-n" cx="600" cy="1000" r="9" fill="#3A3F47" stroke="#15100C" />
+  </g>
+</svg>
