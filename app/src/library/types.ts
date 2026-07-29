@@ -21,6 +21,7 @@ export enum ComponentType {
   AcInlet = 'ac-inlet',
   Ground = 'ground',
   Meter = 'meter',
+  Diode = 'diode',
 }
 
 /**
@@ -81,6 +82,13 @@ export interface InductorProperties {
   inductance: number; // henries
   dcResistance?: number; // ohms
   currentRating?: number; // amps
+}
+
+export interface DiodeProperties {
+  partNumber: string;
+  vrrm: number; // volts, peak reverse
+  ifAvg: number; // amps, average forward current
+  vf?: number; // volts, typical forward drop
 }
 
 export type PotentiometerTaper = 'linear' | 'audio' | 'reverse-audio';
@@ -172,7 +180,7 @@ export interface GroundProperties {
 }
 
 export interface MeterProperties {
-  meterType: 'voltmeter' | 'ammeter';
+  meterType: 'voltmeter' | 'ammeter' | 'oscilloscope';
   /** Base display unit; readings auto-range (A → mA) on the 7-seg face. */
   unit?: 'V' | 'A';
 }
@@ -247,6 +255,7 @@ export type JackDefinition = BaseDefinition<ComponentType.Jack, JackProperties>;
 export type AcInletDefinition = BaseDefinition<ComponentType.AcInlet, AcInletProperties>;
 export type GroundDefinition = BaseDefinition<ComponentType.Ground, GroundProperties>;
 export type MeterDefinition = BaseDefinition<ComponentType.Meter, MeterProperties>;
+export type DiodeDefinition = BaseDefinition<ComponentType.Diode, DiodeProperties>;
 
 export type ComponentDefinition =
   | WireDefinition
@@ -261,7 +270,8 @@ export type ComponentDefinition =
   | JackDefinition
   | AcInletDefinition
   | GroundDefinition
-  | MeterDefinition;
+  | MeterDefinition
+  | DiodeDefinition;
 
 // ---------- helpers ----------
 

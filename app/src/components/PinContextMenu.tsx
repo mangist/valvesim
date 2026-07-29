@@ -29,9 +29,18 @@ export function PinContextMenu({ x, y, onSelect, onClose }: PinContextMenuProps)
         onClose();
       }
     };
+    // The right-click that opens this menu is a native pointerdown still
+    // bubbling to `window` when this effect runs (Pixi's dispatch — which
+    // opens the menu — happens synchronously inside that same event,
+    // before it finishes bubbling). Attaching the listener immediately
+    // would let it catch that same opening click and close the menu
+    // instantly, so defer attachment to the next task.
+    const id = window.setTimeout(() => {
+      window.addEventListener('pointerdown', onPointerDown);
+    }, 0);
     window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('pointerdown', onPointerDown);
     return () => {
+      window.clearTimeout(id);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('pointerdown', onPointerDown);
     };

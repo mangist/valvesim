@@ -1,7 +1,8 @@
-import { Circle, Container, Graphics, Text, type FederatedPointerEvent } from 'pixi.js';
+import { Circle, Container, Graphics, Rectangle, Text, type FederatedPointerEvent } from 'pixi.js';
 import { SchematicComponent } from './Component';
 import { PIXELS_PER_INCH } from './units';
 import { SevenSegDisplay, formatMeterReading } from './SevenSegDisplay';
+import { OscilloscopeDisplay, type ScopeYMode } from './OscilloscopeDisplay';
 import {
   ComponentType,
   formatEng,
@@ -39,6 +40,7 @@ export const REFDES_PREFIX: Record<string, string> = {
   [ComponentType.AcInlet]: 'AC',
   [ComponentType.Ground]: 'GND',
   [ComponentType.Meter]: 'M',
+  [ComponentType.Diode]: 'D',
 };
 
 /**
@@ -73,6 +75,13 @@ export class PlacedComponent extends SchematicComponent {
 
   /** 7-seg readout: meter face, or the inlet's current-draw display. */
   private meterDisplay: SevenSegDisplay | null = null;
+  /** Oscilloscope-only: live trace + stats fitted to the scope-screen window. */
+  private oscilloscopeDisplay: OscilloscopeDisplay | null = null;
+  /** Oscilloscope-only: clickable Auto / 1V-div Y-scale toggle overlay. */
+  private yScaleSwitchView: Container | null = null;
+  private yScaleSwitchBg: Graphics | null = null;
+  private yScaleSwitchLabels: [Text, Text] | null = null;
+  private yScaleSwitchRect = { x: 0, y: 0, w: 0, h: 0 };
   /** Inlet only: bezel + stem + display, shown/hidden with the rocker. */
   private inletMeterGroup: Container | null = null;
 
@@ -186,7 +195,7 @@ export class PlacedComponent extends SchematicComponent {
     }
     if (this.model.type === ComponentType.AcInlet) {
       this.buildPowerSwitch(svgRoot);
-      this.buildInletMeter(b);
+      this.buildInletMeter(svgRoot, b);
     }
     if (this.model.type === ComponentType.Meter) {
       this.buildMeterFace(svgRoot);
@@ -211,30 +220,49 @@ export class PlacedComponent extends SchematicComponent {
     this.meterDisplay.setUnit(unit);
   }
 
+  /** Oscilloscope only: push a fresh solver waveform onto the CRT trace. */
+  setWaveform(time: number[], values: number[]): void {
+    this.oscilloscopeDisplay?.update(time, values);
+  }
+
   /**
    * Digital current-draw readout attached under the AC inlet (visible when
    * ON): a short stem tabs off the panel underside into a Voltmeter-style
    * bezel — dark body with the cream rounded border — holding the 7-seg.
    */
-  private buildInletMeter(b: { x: number; y: number; width: number; height: number }): void {
+  private buildInletMeter(
+    svgRoot: SVGSVGElement | null,
+    b: { x: number; y: number; width: number; height: number },
+  ): void {
     this.inletMeterGroup?.destroy();
     const group = new Container();
     group.eventMode = 'none';
 
+    // The symbol's overall bounds equal its full viewBox, not the drawn
+    // panel's ink extents (there's blank margin below the panel art) — so
+    // anchoring the stem to `b.height` leaves a visible gap. The
+    // `panel-body` marker gives the panel's actual visual rectangle.
+    const marker = svgRoot?.querySelector('#panel-body');
+    const px = Number(marker?.getAttribute('x') ?? b.x);
+    const py = Number(marker?.getAttribute('y') ?? b.y);
+    const pw = Number(marker?.getAttribute('width') ?? b.width);
+    const ph = Number(marker?.getAttribute('height') ?? b.height);
+
     const display = new SevenSegDisplay(52, 'A');
-    const targetW = b.width * 0.6;
+    const targetW = pw * 0.82; // wide enough to read as part of the same unit
     const s = targetW / display.panelWidth;
     const dw = display.panelWidth * s;
     const dh = display.panelHeight * s;
-    const cx = b.x + b.width / 2;
+    const cx = px + pw / 2;
     const pad = 9;
     const stemH = 14;
-    const bezelY = b.y + b.height + stemH - 5;
+    const panelBottom = py + ph;
+    const bezelY = panelBottom + stemH - 5;
 
     const chrome = new Graphics();
     // stem: tabs over the panel's bottom edge so the meter reads as attached
     chrome
-      .rect(cx - 16, b.y + b.height - 7, 32, stemH + 7)
+      .rect(cx - 16, panelBottom - 7, 32, stemH + 7)
       .fill(0x1b1b1e)
       .stroke({ color: 0xcdd6d2, width: 2.5 });
     // bezel matching the Voltmeter face: dark body, cream rounded border
@@ -255,8 +283,13 @@ export class PlacedComponent extends SchematicComponent {
     this.setMeterValue(0);
   }
 
-  /** Fit the 7-seg readout into the meter face's id="meter-display" window. */
+  /** Fit the 7-seg readout (or the oscilloscope trace) into the meter face window. */
   private buildMeterFace(svgRoot: SVGSVGElement | null): void {
+    if ((this.model.properties as MeterProperties).meterType === 'oscilloscope') {
+      this.buildOscilloscopeFace(svgRoot);
+      return;
+    }
+
     const marker = svgRoot?.querySelector('#meter-display');
     if (!marker) return;
     const mx = Number(marker.getAttribute('x') ?? 0);
@@ -275,6 +308,115 @@ export class PlacedComponent extends SchematicComponent {
     this.meterDisplay = display;
     this.addChild(display);
     this.setMeterValue(0);
+  }
+
+  /** Oscilloscope Y-scale mode — defaults to auto-fit. Persists as a user param. */
+  get yScaleMode(): ScopeYMode {
+    return this.params.scopeYMode === 'fixed' ? 'fixed' : 'auto';
+  }
+
+  private setYScaleMode(mode: ScopeYMode): void {
+    this.params.scopeYMode = mode;
+    this.oscilloscopeDisplay?.setYMode(mode);
+    this.drawYScaleSwitch();
+  }
+
+  /** Fit the live CRT trace + stats into the symbol's id="scope-screen" window. */
+  private buildOscilloscopeFace(svgRoot: SVGSVGElement | null): void {
+    const marker = svgRoot?.querySelector('#scope-screen');
+    if (!marker) return;
+    const mx = Number(marker.getAttribute('x') ?? 0);
+    const my = Number(marker.getAttribute('y') ?? 0);
+    const mw = Number(marker.getAttribute('width') ?? 0);
+    const mh = Number(marker.getAttribute('height') ?? 0);
+
+    this.oscilloscopeDisplay?.destroy();
+    const display = new OscilloscopeDisplay(mw, mh);
+    display.position.set(mx, my);
+    display.setYMode(this.yScaleMode);
+    this.oscilloscopeDisplay = display;
+    this.addChild(display);
+
+    this.buildYScaleSwitch(svgRoot);
+  }
+
+  /**
+   * Small on-screen toggle (Auto / 1V-div) for the oscilloscope's vertical
+   * scale. Geometry comes from the symbol's invisible id="yscale-switch"
+   * marker rect, bottom-right of the CRT glass.
+   */
+  private buildYScaleSwitch(svgRoot: SVGSVGElement | null): void {
+    const marker = svgRoot?.querySelector('#yscale-switch');
+    if (!marker) return;
+    const x = Number(marker.getAttribute('x') ?? 0);
+    const y = Number(marker.getAttribute('y') ?? 0);
+    const w = Number(marker.getAttribute('width') ?? 0);
+    const h = Number(marker.getAttribute('height') ?? 0);
+    this.yScaleSwitchRect = { x, y, w, h };
+
+    this.yScaleSwitchView?.destroy();
+    const view = new Container();
+    view.eventMode = 'static';
+    view.cursor = 'pointer';
+    view.hitArea = new Rectangle(x, y, w, h);
+    view.on('pointerdown', (e: FederatedPointerEvent) => {
+      e.stopPropagation(); // never drags the component or pans the canvas
+    });
+    view.on('pointertap', () => {
+      this.setYScaleMode(this.yScaleMode === 'auto' ? 'fixed' : 'auto');
+    });
+
+    const bg = new Graphics();
+    view.addChild(bg);
+
+    const labelStyle = (size: number) => ({
+      fontFamily: "'Consolas', 'Menlo', monospace",
+      fontSize: size,
+      fontWeight: '700' as const,
+    });
+    const autoLabel = new Text({
+      text: 'AUTO',
+      resolution: (window.devicePixelRatio || 1) * 2,
+      style: labelStyle(h * 0.34),
+    });
+    autoLabel.anchor.set(0.5);
+    autoLabel.position.set(x + w * 0.25, y + h / 2);
+    view.addChild(autoLabel);
+
+    const fixedLabel = new Text({
+      text: '1V/DIV',
+      resolution: (window.devicePixelRatio || 1) * 2,
+      style: labelStyle(h * 0.28),
+    });
+    fixedLabel.anchor.set(0.5);
+    fixedLabel.position.set(x + w * 0.75, y + h / 2);
+    view.addChild(fixedLabel);
+
+    this.yScaleSwitchBg = bg;
+    this.yScaleSwitchLabels = [autoLabel, fixedLabel];
+    this.yScaleSwitchView = view;
+    this.addChild(view);
+    this.drawYScaleSwitch();
+  }
+
+  /** Redraw the switch's active/inactive highlight and label colors. */
+  private drawYScaleSwitch(): void {
+    if (!this.yScaleSwitchView || !this.yScaleSwitchBg) return;
+    const { x, y, w, h } = this.yScaleSwitchRect;
+    const auto = this.yScaleMode === 'auto';
+    const r = h * 0.2;
+
+    const bg = this.yScaleSwitchBg;
+    bg.clear();
+    bg.roundRect(x, y, w, h, r).fill(0x081208).stroke({ color: 0x2c5a38, width: 2 });
+    const half = w / 2;
+    bg.roundRect(x + (auto ? 0 : half), y, half, h, r).fill(0x1c3a24);
+
+    const [autoLabel, fixedLabel] = this.yScaleSwitchLabels ?? [];
+    const ON = 0x39ff6a;
+    const OFF = 0x2c5a38;
+    if (autoLabel) autoLabel.style.fill = auto ? ON : OFF;
+    if (fixedLabel) fixedLabel.style.fill = auto ? OFF : ON;
   }
 
   /**
@@ -501,7 +643,11 @@ export class PlacedComponent extends SchematicComponent {
     };
   }
 
-  /** R/C primitive card from catalog properties (passives have no subckt). */
+  /**
+   * R/C/D primitive card from catalog properties — these are native SPICE
+   * devices (R<refDes>/C<refDes>/D<refDes> n1 n2 <value-or-model>), not an
+   * X-instance subckt call like tubes/transformers.
+   */
   private passiveSpice(): string {
     const netFor = (pinNumber: string): string | undefined =>
       this.pins.find((p) => p.id === pinNumber)?.net ?? undefined;
@@ -510,10 +656,17 @@ export class PlacedComponent extends SchematicComponent {
     if (!n1 || !n2) {
       return `* ${this.refDes} (${this.model.name}) not fully wired`;
     }
-    // refDes already carries the element letter (R1, C3, …)
+    // refDes already carries the element letter (R1, C3, D4, …)
     if (this.model.type === ComponentType.Resistor) {
       const { resistance } = this.model.properties as ResistorProperties;
       return `${this.refDes} ${n1} ${n2} ${formatEng(resistance)}`;
+    }
+    if (this.model.type === ComponentType.Diode) {
+      // n1 = anode (pin 1), n2 = cathode (pin 2); model name is the .inc
+      // file's declared .MODEL name, reusing the "subckt" field even
+      // though this isn't a subckt — it's the one thing that names it.
+      const modelName = this.model.spice?.subckt ?? 'D';
+      return `${this.refDes} ${n1} ${n2} ${modelName}`;
     }
     const { capacitance } = this.model.properties as CapacitorProperties;
     return `${this.refDes} ${n1} ${n2} ${formatEng(capacitance)}`;
@@ -525,7 +678,8 @@ export class PlacedComponent extends SchematicComponent {
     }
     if (
       this.model.type === ComponentType.Resistor ||
-      this.model.type === ComponentType.Capacitor
+      this.model.type === ComponentType.Capacitor ||
+      this.model.type === ComponentType.Diode
     ) {
       return this.passiveSpice();
     }

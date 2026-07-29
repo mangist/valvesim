@@ -208,6 +208,62 @@
       }
     },
     {
+      "id": "diode-1n4007",
+      "name": "1N4007",
+      "category": "Diodes",
+      "type": "diode",
+      "description": "1N4007 general-purpose silicon rectifier diode, 1000V/1A, axial DO-41 package.",
+      "width": 1.75,
+      "height": 0.2,
+      "symbol": "/components/1N4007.svg",
+      "pins": [
+        { "number": "1", "name": "ANODE", "svgId": "pin-1", "terminal": "1" },
+        { "number": "2", "name": "CATHODE", "svgId": "pin-2", "terminal": "2" }
+      ],
+      "properties": {
+        "partNumber": "1N4007",
+        "vrrm": 1000,
+        "ifAvg": 1,
+        "vf": 1.1
+      },
+      "spice": {
+        "file": "1N4007.inc",
+        "subckt": "DI_1N4007",
+        "ports": ["A", "K"],
+        "instances": [
+          { "suffix": "", "portToPin": { "A": "1", "K": "2" } }
+        ],
+        "notes": "Native D-device primitive (see PlacedComponent.passiveSpice), not an X-instance subckt call — 'subckt'/'ports'/'instances' here are unused by the diode's own card generation; 'subckt' just names the .model declared in 1N4007.inc so the model file still gets deduped/inlined like every other component's SPICE binding."
+      }
+    },
+    {
+      "id": "meter-oscilloscope",
+      "name": "Oscilloscope",
+      "category": "Meters",
+      "type": "meter",
+      "description": "Single-channel panel oscilloscope with a live green CRT trace and on-screen Vrms/Vpp/ripple/frequency readout, updated by the background solver. 10Meg input impedance, same probe model as the Voltmeter.",
+      "width": 4.5,
+      "height": 5.1,
+      "symbol": "/components/Oscilloscope.svg",
+      "pins": [
+        { "number": "+", "name": "SCOPE_PLUS", "svgId": "pin-p", "terminal": "P" },
+        { "number": "-", "name": "SCOPE_MINUS", "svgId": "pin-n", "terminal": "N" }
+      ],
+      "properties": {
+        "meterType": "oscilloscope",
+        "unit": "V"
+      },
+      "spice": {
+        "file": "Voltmeter.inc",
+        "subckt": "VOLTMETER",
+        "ports": ["P", "N"],
+        "instances": [
+          { "suffix": "", "portToPin": { "P": "+", "N": "-" } }
+        ],
+        "notes": "Same 10Meg-across-P/N probe model as the Voltmeter — the oscilloscope renders the waveform instead of a scalar reading."
+      }
+    },
+    {
       "id": "tube-5u4g",
       "name": "5U4G",
       "category": "Rectifier Tubes",
