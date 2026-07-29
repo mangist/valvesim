@@ -143,3 +143,19 @@
   background: var(--vs-bg-inset);
   color: var(--vs-glow);
 }
+
+/* Wire context menu extras: a divider and a "Delete" item styled as a warning. */
+.vs-menu-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--vs-border);
+}
+
+.vs-menu-item-danger {
+  color: #ff6b6b;
+}
+
+.vs-menu-item-danger:hover {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff8787;
+}

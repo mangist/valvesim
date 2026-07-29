@@ -180,8 +180,13 @@ export class WireTool {
     wire.setEndpoint(1, world.x, world.y);
   };
 
-  private onStageDown = () => {
-    this.place();
+  /** Left-click on empty canvas drops the wire in hand; right-click cancels it. */
+  private onStageDown = (e: FederatedPointerEvent) => {
+    if (e.button === 2) {
+      this.cancel();
+    } else {
+      this.place();
+    }
   };
 
   private teardown(): void {

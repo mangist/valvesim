@@ -1,5 +1,5 @@
-import { Wire } from './Wire';
-import { DEFAULT_WIRE_GAUGE_AWG, DEFAULT_WIRE_KIND, type WireKind } from './wireGauges';
+import { Wire, type WireAnchor } from './Wire';
+import { DEFAULT_WIRE_GAUGE_AWG, type WireKind } from './wireGauges';
 import type { ComponentModel } from '../library';
 
 /** A wire endpoint's electrical attachment (component pin), when connected. */
@@ -17,13 +17,6 @@ export class PlacedWire extends Wire {
   readonly guid: string;
   readonly model: ComponentModel;
   refDes = '';
-
-  /**
-   * Loose (draping, physics-sagged) or rigid (bus wire). Rigid doesn't have
-   * its own stiff/straight physics yet — recorded now so that behavior can
-   * key off it once it's built; today both render/behave identically.
-   */
-  kind: WireKind = DEFAULT_WIRE_KIND;
 
   /** Pin the wire started from. */
   from: WireAttachment | null = null;
@@ -55,6 +48,7 @@ export class PlacedWire extends Wire {
     from: WireAttachment | null;
     to: WireAttachment | null;
     endpoints: Array<{ x: number; y: number }>;
+    anchors: WireAnchor[];
   } {
     return {
       guid: this.guid,
@@ -66,6 +60,7 @@ export class PlacedWire extends Wire {
       from: this.from,
       to: this.to,
       endpoints: this.endpoints,
+      anchors: this.getAnchors(),
     };
   }
 }

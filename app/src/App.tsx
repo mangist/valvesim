@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import './App.css';
 import { Sidebar } from './components/Sidebar';
 import { PinContextMenu } from './components/PinContextMenu';
+import { WireContextMenu } from './components/WireContextMenu';
 import { Viewport } from './engine/Viewport';
 import { PlacedComponent, REFDES_PREFIX } from './engine/PlacedComponent';
 import { WireTool } from './engine/WireTool';
@@ -51,6 +52,12 @@ export default function App() {
     x: number;
     y: number;
   } | null>(null);
+  /** Active right-click menu on a placed wire's body. */
+  const [wireMenu, setWireMenu] = useState<{
+    wire: PlacedWire;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Mount the PixiJS canvas pipeline into the canvas host element
   useEffect(() => {
@@ -76,6 +83,7 @@ export default function App() {
         wireToolRef.current = new WireTool(viewport, wireModel, (wire) => {
           wire.refDes = nextRefDes('W');
           wiresRef.current.set(wire.guid, wire);
+          registerWireHandlers(wire);
           setStatusText(`Placed wire ${wire.refDes} · ${wire.guid}`);
         });
       }
@@ -186,6 +194,52 @@ export default function App() {
     };
   };
 
+  /** Right-click a wire's body: open its Loose/Rigid + AWG + delete menu. */
+  const registerWireHandlers = (wire: PlacedWire) => {
+    wire.onContextMenu = (w, clientX, clientY) => {
+      setWireMenu({ wire: w as PlacedWire, x: clientX, y: clientY });
+    };
+  };
+
+  /** Convert a client (browser) point to world coordinates, for anchor placement. */
+  const clientToWorld = (clientX: number, clientY: number): { x: number; y: number } | null => {
+    const viewport = viewportRef.current;
+    const host = hostRef.current;
+    if (!viewport || !host) return null;
+    const rect = host.getBoundingClientRect();
+    return viewport.toWorld(clientX - rect.left, clientY - rect.top);
+  };
+
+  /** Wire menu: change kind, optionally also the gauge (re-stroked immediately). */
+  const changeWireKindGauge = (kind: WireKind, gaugeAwg?: number) => {
+    const wire = wireMenu?.wire;
+    if (!wire) return;
+    wire.kind = kind;
+    if (gaugeAwg !== undefined) wire.gaugeAwg = gaugeAwg;
+    setStatusText(
+      `${wire.refDes || 'wire'} set to ${kind}${gaugeAwg !== undefined ? ` · ${gaugeAwg} AWG` : ''}`,
+    );
+  };
+
+  /** Wire menu: add a bend/anchor point at the right-click location. */
+  const addWireAnchor = () => {
+    const menu = wireMenu;
+    if (!menu) return;
+    const world = clientToWorld(menu.x, menu.y);
+    if (!world) return;
+    menu.wire.addAnchor(world.x, world.y);
+    setStatusText(`Added anchor to ${menu.wire.refDes || 'wire'}`);
+  };
+
+  /** Wire menu: remove the wire from the canvas circuit entirely. */
+  const deleteWire = () => {
+    const wire = wireMenu?.wire;
+    if (!wire) return;
+    wiresRef.current.delete(wire.guid);
+    wire.destroy();
+    setStatusText(`Deleted ${wire.refDes || 'wire'}`);
+  };
+
   /** Track loaded refDes values so future placements continue after them. */
   const bumpRefDes = (refDes: string) => {
     const m = /^([A-Za-z]+?)(\d+)$/.exec(refDes);
@@ -281,6 +335,8 @@ export default function App() {
       wire.attach(viewport.app.ticker);
       attachEnd(wire, 0, saved.from);
       attachEnd(wire, 1, saved.to);
+      wire.restoreAnchors(saved.anchors ?? []);
+      registerWireHandlers(wire);
       wiresRef.current.set(wire.guid, wire);
       bumpRefDes(saved.refDes);
     }
@@ -532,6 +588,19 @@ export default function App() {
           y={pinMenu.y}
           onSelect={chooseWire}
           onClose={() => setPinMenu(null)}
+        />
+      )}
+
+      {wireMenu && (
+        <WireContextMenu
+          x={wireMenu.x}
+          y={wireMenu.y}
+          gaugeAwg={wireMenu.wire.gaugeAwg}
+          onSelectKind={(kind) => changeWireKindGauge(kind)}
+          onSelectGauge={(kind, gaugeAwg) => changeWireKindGauge(kind, gaugeAwg)}
+          onAddAnchor={addWireAnchor}
+          onDelete={deleteWire}
+          onClose={() => setWireMenu(null)}
         />
       )}
 
