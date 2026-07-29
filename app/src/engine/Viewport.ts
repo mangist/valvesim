@@ -63,6 +63,11 @@ export class Viewport {
     this.app.stage.addChild(this.world);
     this.app.stage.addChild(this.ruler.container);
 
+    // Wires set a negative zIndex so they always sort/hit-test behind
+    // components — otherwise a wire attached right at a pin could shadow
+    // that pin's hover/click.
+    this.world.sortableChildren = true;
+
     this.app.stage.eventMode = 'static';
     this.app.stage.hitArea = this.app.screen;
     this.app.stage.on('pointerdown', this.onPointerDown);

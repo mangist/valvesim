@@ -2,18 +2,17 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import './App.css';
 import { Sidebar } from './components/Sidebar';
 import { PinContextMenu } from './components/PinContextMenu';
+import { WireContextMenu } from './components/WireContextMenu';
 import { Viewport } from './engine/Viewport';
 import { PlacedComponent, REFDES_PREFIX } from './engine/PlacedComponent';
 import { WireTool } from './engine/WireTool';
-import type { PlacedWire } from './engine/PlacedWire';
+import { PlacedWire } from './engine/PlacedWire';
+import { buildDesignFile, parseDesignFile, type DesignFile, type SavedWire } from './engine/design';
 import type { Pin } from './engine/Component';
 import type { WireKind } from './engine/wireGauges';
-import { buildDemoNetlist } from './simulation/demo';
 import { buildLiveNetlist, readProbes, type LiveProbe } from './simulation/liveMeters';
 import { getComponentById, type ComponentModel } from './library';
 import type { SpiceRequest, SpiceResponse } from './simulation/spice.worker';
-
-type SimState = 'idle' | 'running' | 'done' | 'error';
 
 export default function App() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -27,13 +26,17 @@ export default function App() {
   /** Live metering: probes of the in-flight solve + re-entrancy guard. */
   const liveProbesRef = useRef<LiveProbe[]>([]);
   const liveBusyRef = useRef(false);
+  /** Real-time simulation transport (Play/Stop). Ref mirrors state for the tick. */
+  const [simRunning, setSimRunning] = useState(true);
+  const simRunningRef = useRef(true);
+  /** Hidden file input backing the Load button. */
+  const loadInputRef = useRef<HTMLInputElement>(null);
 
   const nextRefDes = (prefix: string): string => {
     const seq = (refDesCounters.current.get(prefix) ?? 0) + 1;
     refDesCounters.current.set(prefix, seq);
     return `${prefix}${seq}`;
   };
-  const [simState, setSimState] = useState<SimState>('idle');
   const [statusText, setStatusText] = useState('Ready');
   /** Active component-label editor (input overlay above the canvas label). */
   const [labelEdit, setLabelEdit] = useState<{
@@ -46,6 +49,12 @@ export default function App() {
   const [pinMenu, setPinMenu] = useState<{
     component: PlacedComponent;
     pin: Pin;
+    x: number;
+    y: number;
+  } | null>(null);
+  /** Active right-click menu on a placed wire's body. */
+  const [wireMenu, setWireMenu] = useState<{
+    wire: PlacedWire;
     x: number;
     y: number;
   } | null>(null);
@@ -74,6 +83,7 @@ export default function App() {
         wireToolRef.current = new WireTool(viewport, wireModel, (wire) => {
           wire.refDes = nextRefDes('W');
           wiresRef.current.set(wire.guid, wire);
+          registerWireHandlers(wire);
           setStatusText(`Placed wire ${wire.refDes} · ${wire.guid}`);
         });
       }
@@ -84,6 +94,9 @@ export default function App() {
           viewport,
           instances: instancesRef.current,
           wires: wiresRef.current,
+          buildDesign: () =>
+            buildDesignFile(instancesRef.current.values(), wiresRef.current.values()),
+          loadDesign,
         };
       }
     });
@@ -126,7 +139,20 @@ export default function App() {
     instance.position.set(viewport.snap(world.x), viewport.snap(world.y));
     instance.mount(viewport);
     instancesRef.current.set(instance.guid, instance);
+    registerInstanceHandlers(instance);
 
+    instance
+      .load()
+      .then(() => setStatusText(`Placed ${instance.refDes} — ${model.name} · ${instance.guid}`))
+      .catch((err) =>
+        setStatusText(
+          `Failed to load ${model.name} symbol: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
+  };
+
+  /** Wire up the interactive callbacks every canvas instance needs. */
+  const registerInstanceHandlers = (instance: PlacedComponent) => {
     // Label click: open the rename editor over the canvas label
     instance.onLabelEdit = (component) => {
       const pos = component.getLabelScreenPosition();
@@ -166,15 +192,181 @@ export default function App() {
     instance.onSwitchToggle = (component, on) => {
       setStatusText(`${component.refDes} (${component.label}) power ${on ? 'ON' : 'OFF'}`);
     };
+  };
 
-    instance
-      .load()
-      .then(() => setStatusText(`Placed ${instance.refDes} — ${model.name} · ${instance.guid}`))
-      .catch((err) =>
-        setStatusText(
-          `Failed to load ${model.name} symbol: ${err instanceof Error ? err.message : String(err)}`,
-        ),
+  /** Right-click a wire's body: open its Loose/Rigid + AWG + delete menu. */
+  const registerWireHandlers = (wire: PlacedWire) => {
+    wire.onContextMenu = (w, clientX, clientY) => {
+      setWireMenu({ wire: w as PlacedWire, x: clientX, y: clientY });
+    };
+  };
+
+  /** Convert a client (browser) point to world coordinates, for anchor placement. */
+  const clientToWorld = (clientX: number, clientY: number): { x: number; y: number } | null => {
+    const viewport = viewportRef.current;
+    const host = hostRef.current;
+    if (!viewport || !host) return null;
+    const rect = host.getBoundingClientRect();
+    return viewport.toWorld(clientX - rect.left, clientY - rect.top);
+  };
+
+  /** Wire menu: change kind, optionally also the gauge (re-stroked immediately). */
+  const changeWireKindGauge = (kind: WireKind, gaugeAwg?: number) => {
+    const wire = wireMenu?.wire;
+    if (!wire) return;
+    wire.kind = kind;
+    if (gaugeAwg !== undefined) wire.gaugeAwg = gaugeAwg;
+    setStatusText(
+      `${wire.refDes || 'wire'} set to ${kind}${gaugeAwg !== undefined ? ` · ${gaugeAwg} AWG` : ''}`,
+    );
+  };
+
+  /** Wire menu: add a bend/anchor point at the right-click location. */
+  const addWireAnchor = () => {
+    const menu = wireMenu;
+    if (!menu) return;
+    const world = clientToWorld(menu.x, menu.y);
+    if (!world) return;
+    menu.wire.addAnchor(world.x, world.y);
+    setStatusText(`Added anchor to ${menu.wire.refDes || 'wire'}`);
+  };
+
+  /** Wire menu: remove the wire from the canvas circuit entirely. */
+  const deleteWire = () => {
+    const wire = wireMenu?.wire;
+    if (!wire) return;
+    wiresRef.current.delete(wire.guid);
+    wire.destroy();
+    setStatusText(`Deleted ${wire.refDes || 'wire'}`);
+  };
+
+  /** Track loaded refDes values so future placements continue after them. */
+  const bumpRefDes = (refDes: string) => {
+    const m = /^([A-Za-z]+?)(\d+)$/.exec(refDes);
+    if (!m) return;
+    const prefix = m[1];
+    const seq = Number(m[2]);
+    refDesCounters.current.set(prefix, Math.max(refDesCounters.current.get(prefix) ?? 0, seq));
+  };
+
+  /** Download the whole canvas as a .json design file. */
+  const saveDesign = () => {
+    const design = buildDesignFile(instancesRef.current.values(), wiresRef.current.values());
+    const stamp = design.savedAt.replace(/[:T]/g, '-').slice(0, 19);
+    const blob = new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `valvesim-design-${stamp}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatusText(
+      `Saved design — ${design.components.length} components, ${design.wires.length} wires`,
+    );
+  };
+
+  /** Remove everything from the canvas (before loading a design). */
+  const clearCanvas = () => {
+    wireToolRef.current?.cancel();
+    for (const inst of instancesRef.current.values()) inst.destroy();
+    for (const wire of wiresRef.current.values()) wire.destroy();
+    instancesRef.current.clear();
+    wiresRef.current.clear();
+    refDesCounters.current.clear();
+  };
+
+  /** Rebuild the canvas from a parsed design file. */
+  const loadDesign = async (design: DesignFile) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    clearCanvas();
+
+    // Components first (wires re-attach to their pins afterwards)
+    const loads: Promise<void>[] = [];
+    for (const saved of design.components) {
+      const model = getComponentById(saved.componentId);
+      if (!model) {
+        console.warn(`[valvesim] unknown component in design file: ${saved.componentId}`);
+        continue;
+      }
+      const instance = new PlacedComponent(model, saved.refDes, saved.guid);
+      instance.position.set(saved.x, saved.y);
+      instance.params = { ...saved.params };
+      instance.setLabel(saved.label);
+      instance.mount(viewport);
+      registerInstanceHandlers(instance);
+      instancesRef.current.set(instance.guid, instance);
+      bumpRefDes(saved.refDes);
+      loads.push(
+        instance.load().then(() => {
+          for (const savedPin of saved.pins) {
+            const pin = instance.pins.find((p) => p.id === savedPin.id);
+            if (pin) pin.net = savedPin.net;
+          }
+          instance.refreshPins();
+        }),
       );
+    }
+    await Promise.all(loads);
+
+    // Wires: restore geometry, then re-lock attached ends to their pins
+    const wireModel = getComponentById('wire-hookup');
+    const attachEnd = (wire: PlacedWire, which: 0 | 1, att: SavedWire['from']) => {
+      if (!att) return;
+      const comp = instancesRef.current.get(att.componentGuid);
+      const pin = comp?.pins.find((p) => p.id === att.pinId);
+      if (!comp || !pin) return;
+      if (which === 0) wire.from = att;
+      else wire.to = att;
+      const pinWorld = () => viewport.world.toLocal(comp.toGlobal({ x: pin.x, y: pin.y }));
+      const pos = pinWorld();
+      wire.setEndpoint(which, pos.x, pos.y);
+      wire.setFollow(which, pinWorld);
+    };
+    for (const saved of design.wires) {
+      if (!wireModel) break;
+      const [a, b] = saved.endpoints;
+      const wire = new PlacedWire(wireModel, a.x, a.y, b.x, b.y, saved.guid);
+      wire.refDes = saved.refDes;
+      wire.kind = saved.kind ?? 'loose';
+      wire.gaugeAwg = saved.gaugeAwg ?? 22;
+      wire.net = saved.net;
+      viewport.world.addChild(wire);
+      wire.attach(viewport.app.ticker);
+      attachEnd(wire, 0, saved.from);
+      attachEnd(wire, 1, saved.to);
+      wire.restoreAnchors(saved.anchors ?? []);
+      registerWireHandlers(wire);
+      wiresRef.current.set(wire.guid, wire);
+      bumpRefDes(saved.refDes);
+    }
+
+    // New wires must mint nets above anything the file already uses
+    let maxNet = 0;
+    const trackNet = (net: string | null) => {
+      const m = net ? /^N(\d+)$/.exec(net) : null;
+      if (m) maxNet = Math.max(maxNet, Number(m[1]));
+    };
+    for (const inst of instancesRef.current.values()) inst.pins.forEach((p) => trackNet(p.net));
+    for (const wire of wiresRef.current.values()) trackNet(wire.net);
+    wireToolRef.current?.seedNetCounter(maxNet);
+
+    setStatusText(
+      `Loaded design — ${instancesRef.current.size} components, ${wiresRef.current.size} wires`,
+    );
+  };
+
+  /** Load button: browse for a design file, then rebuild the canvas. */
+  const onLoadFileChosen = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const design = parseDesignFile(await file.text());
+      await loadDesign(design);
+    } catch (err) {
+      setStatusText(
+        `Could not load design: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   };
 
   /** Lazily create the shared SPICE worker (runs are serialized inside it). */
@@ -188,7 +380,8 @@ export default function App() {
         const msg = e.data;
         // 500ms live-meter solves route to the displays, silently
         if (msg.tag === 'live') {
-          if (msg.type === 'result') {
+          // ignore a straggler result that lands after the user hit Stop
+          if (msg.type === 'result' && simRunningRef.current) {
             const readings = readProbes(msg.data, liveProbesRef.current);
             for (const [guid, value] of readings) {
               instancesRef.current.get(guid)?.setMeterValue(value);
@@ -197,40 +390,15 @@ export default function App() {
           if (msg.type !== 'progress') liveBusyRef.current = false;
           return;
         }
+        // untagged runs (none in the UI anymore) — log for debugging
         if (msg.type === 'result') {
-          setSimState('done');
-          setStatusText(
-            `Simulation complete — ${msg.summary ?? 'results in console'}`,
-          );
           console.log('[valvesim] SPICE results:', msg.data);
         } else if (msg.type === 'error') {
-          setSimState('error');
-          setStatusText(`Simulation error: ${msg.message}`);
-        } else if (msg.type === 'progress') {
-          setStatusText(msg.message);
+          console.error('[valvesim] SPICE error:', msg.message);
         }
       };
     }
     return workerRef.current;
-  };
-
-  // Lazily create the SPICE worker and run a smoke-test netlist
-  const runSimulation = async () => {
-    const worker = ensureWorker();
-    setSimState('running');
-    setStatusText('Running SPICE simulation…');
-    try {
-      const request: SpiceRequest = {
-        type: 'run',
-        netlist: await buildDemoNetlist(),
-      };
-      worker.postMessage(request);
-    } catch (err) {
-      setSimState('error');
-      setStatusText(
-        `Netlist error: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
   };
 
   // Background solver: every 500ms, re-solve the canvas circuit and push
@@ -238,6 +406,7 @@ export default function App() {
   // flight, and does nothing until a powered AC inlet exists.
   useEffect(() => {
     const tick = async () => {
+      if (!simRunningRef.current) return; // transport stopped (Play/Stop)
       if (liveBusyRef.current) return;
       const instances = [...instancesRef.current.values()];
       try {
@@ -258,6 +427,23 @@ export default function App() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** Play: resume the 500ms real-time solve loop. */
+  const startLiveSim = () => {
+    simRunningRef.current = true;
+    setSimRunning(true);
+    setStatusText('Real-time simulation running');
+  };
+
+  /** Stop: halt the solve loop and zero every meter readout. */
+  const stopLiveSim = () => {
+    simRunningRef.current = false;
+    setSimRunning(false);
+    for (const inst of instancesRef.current.values()) {
+      inst.setMeterValue(0);
+    }
+    setStatusText('Real-time simulation stopped');
+  };
 
   /** Start a wire from the right-clicked pin with the chosen type/gauge. */
   const chooseWire = (kind: WireKind, gaugeAwg: number) => {
@@ -291,16 +477,71 @@ export default function App() {
       <header className="vs-header">
         <img className="vs-logo" src="/valvesim.svg" alt="valvesim.com" />
         <div className="vs-header-actions">
-          <button className="vs-btn" disabled title="Coming soon">
-            Save
+          <button
+            className={`vs-btn vs-btn-transport vs-btn-play ${simRunning ? 'vs-btn-transport-active' : ''}`}
+            onClick={startLiveSim}
+            disabled={simRunning}
+            title="Run the real-time circuit simulation"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M 2 1 L 13 7 L 2 13 Z" fill="currentColor" />
+            </svg>
+            Play
           </button>
           <button
-            className="vs-btn vs-btn-primary"
-            onClick={runSimulation}
-            disabled={simState === 'running'}
+            className={`vs-btn vs-btn-transport vs-btn-stop ${simRunning ? '' : 'vs-btn-transport-active'}`}
+            onClick={stopLiveSim}
+            disabled={!simRunning}
+            title="Stop the real-time circuit simulation"
           >
-            {simState === 'running' ? 'Simulating…' : 'Run Simulation'}
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <rect x="2" y="2" width="10" height="10" fill="currentColor" />
+            </svg>
+            Stop
           </button>
+          <button
+            className="vs-btn vs-btn-transport vs-btn-load"
+            onClick={() => loadInputRef.current?.click()}
+            title="Load a design file onto the canvas"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path
+                d="M 7 10 L 7 2 M 3.5 5.5 L 7 2 L 10.5 5.5 M 1.5 9.5 L 1.5 12.5 L 12.5 12.5 L 12.5 9.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Load
+          </button>
+          <button
+            className="vs-btn vs-btn-transport vs-btn-save"
+            onClick={saveDesign}
+            title="Download the canvas as a design file"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path
+                d="M 1.5 1.5 L 10.5 1.5 L 12.5 3.5 L 12.5 12.5 L 1.5 12.5 Z M 4 1.5 L 4 5 L 10 5 L 10 1.5 M 3.5 12.5 L 3.5 8 L 10.5 8 L 10.5 12.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Save
+          </button>
+          <input
+            ref={loadInputRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={(e) => {
+              void onLoadFileChosen(e.target.files?.[0] ?? null);
+              e.target.value = ''; // allow re-loading the same file
+            }}
+          />
         </div>
       </header>
 
@@ -350,10 +591,21 @@ export default function App() {
         />
       )}
 
+      {wireMenu && (
+        <WireContextMenu
+          x={wireMenu.x}
+          y={wireMenu.y}
+          gaugeAwg={wireMenu.wire.gaugeAwg}
+          onSelectKind={(kind) => changeWireKindGauge(kind)}
+          onSelectGauge={(kind, gaugeAwg) => changeWireKindGauge(kind, gaugeAwg)}
+          onAddAnchor={addWireAnchor}
+          onDelete={deleteWire}
+          onClose={() => setWireMenu(null)}
+        />
+      )}
+
       <footer className="vs-statusbar">
-        <span className={simState === 'done' ? 'vs-status-ok' : undefined}>
-          {statusText}
-        </span>
+        <span>{statusText}</span>
         <span className="vs-status-hint">Scroll to zoom · Drag to pan</span>
       </footer>
     </div>
