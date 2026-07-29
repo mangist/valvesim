@@ -40,6 +40,14 @@ export class WireTool {
   }
 
   /**
+   * Ensure future minted nets start above `min` — called after loading a
+   * design so new wires can't reuse a net name already in the file.
+   */
+  seedNetCounter(min: number): void {
+    this.netCounter = Math.max(this.netCounter, min);
+  }
+
+  /**
    * Begin a wire at a component pin (its world position); locks endpoint 0.
    * `choice` picks the wire type/gauge (from the right-click pin menu) —
    * defaults to loose 22 AWG, matching a plain left-click start.

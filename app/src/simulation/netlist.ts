@@ -76,5 +76,5 @@ export function buildNetlist(schematic: Schematic): string {
   return toSpiceAscii(lines.join('\n'));
 }
 
-// (The smoke-test circuit lives in demo.ts — it exercises the component
-// library end to end: JSON catalog -> /models .inc -> netlist -> worker.)
+// (Canvas-driven netlists for the real-time solve are assembled in
+// liveMeters.ts: JSON catalog -> /models .inc -> netlist -> worker.)

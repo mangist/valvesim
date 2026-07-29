@@ -30,6 +30,45 @@
   margin-left: auto;
 }
 
+/* Real-time simulation transport (Play / Stop) — big, icon + label */
+.vs-btn-transport {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.vs-btn-transport svg {
+  flex-shrink: 0;
+}
+
+/* The button reflecting the current transport state glows:
+   Play = muted green, Stop = muted red */
+.vs-btn-transport-active {
+  opacity: 1 !important;
+}
+
+.vs-btn-play.vs-btn-transport-active {
+  background: #2c4f38;
+  border-color: #4a8a5e;
+  color: #a8e6b8;
+  box-shadow: 0 0 10px rgba(74, 138, 94, 0.4);
+}
+
+.vs-btn-stop.vs-btn-transport-active {
+  background: #5a2320;
+  border-color: #9c4a42;
+  color: #f0a29a;
+  box-shadow: 0 0 10px rgba(156, 74, 66, 0.4);
+}
+
+/* Load/Save sit at the far right, a button's width away from the transport */
+.vs-btn-load {
+  margin-left: 96px;
+}
+
 /* Right-click pin menu: wire type (Loose/Rigid), each with an AWG-gauge
    submenu. Position comes from --vs-menu-x/--vs-menu-y (viewport/client
    coordinates of the right-click), set by App. */

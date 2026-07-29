@@ -20,13 +20,16 @@ export interface LiveNetlist {
 
 /**
  * Build a solvable netlist from everything placed on canvas.
- * Returns null when there's nothing worth solving (no powered source).
+ * Returns null when there's nothing worth solving. Note this runs even
+ * when every inlet is switched OFF — the dead-input subckt solves to 0V,
+ * so voltmeters correctly fall to zero instead of freezing at their last
+ * powered reading.
  */
 export async function buildLiveNetlist(instances: PlacedComponent[]): Promise<LiveNetlist | null> {
-  const powered = instances.some(
-    (i) => i.model.type === ComponentType.AcInlet && i.switchOn,
+  const relevant = instances.some(
+    (i) => i.model.type === ComponentType.AcInlet || i.model.type === ComponentType.Meter,
   );
-  if (!powered) return null;
+  if (!relevant) return null;
 
   // Subcircuit model texts, deduped by file
   const models = new Map<string, string>();

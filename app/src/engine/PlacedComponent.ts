@@ -1,4 +1,4 @@
-import { Circle, Graphics, Text, type FederatedPointerEvent } from 'pixi.js';
+import { Circle, Container, Graphics, Text, type FederatedPointerEvent } from 'pixi.js';
 import { SchematicComponent } from './Component';
 import { PIXELS_PER_INCH } from './units';
 import { SevenSegDisplay, formatMeterReading } from './SevenSegDisplay';
@@ -73,6 +73,8 @@ export class PlacedComponent extends SchematicComponent {
 
   /** 7-seg readout: meter face, or the inlet's current-draw display. */
   private meterDisplay: SevenSegDisplay | null = null;
+  /** Inlet only: bezel + stem + display, shown/hidden with the rocker. */
+  private inletMeterGroup: Container | null = null;
 
   /** Invoked when the power rocker is toggled (App shows a status update). */
   onSwitchToggle?: (component: PlacedComponent, on: boolean) => void;
@@ -114,8 +116,8 @@ export class PlacedComponent extends SchematicComponent {
     this.params.switchOn = on ? 1 : 0;
     this.drawPowerSwitch();
     // the current-draw readout only shows while power is on
-    if (this.model.type === ComponentType.AcInlet && this.meterDisplay) {
-      this.meterDisplay.visible = on;
+    if (this.model.type === ComponentType.AcInlet && this.inletMeterGroup) {
+      this.inletMeterGroup.visible = on;
       if (on) this.setMeterValue(0);
     }
     this.onSwitchToggle?.(this, on);
@@ -209,17 +211,47 @@ export class PlacedComponent extends SchematicComponent {
     this.meterDisplay.setUnit(unit);
   }
 
-  /** Digital current-draw readout hung under the AC inlet (visible when ON). */
+  /**
+   * Digital current-draw readout attached under the AC inlet (visible when
+   * ON): a short stem tabs off the panel underside into a Voltmeter-style
+   * bezel — dark body with the cream rounded border — holding the 7-seg.
+   */
   private buildInletMeter(b: { x: number; y: number; width: number; height: number }): void {
-    this.meterDisplay?.destroy();
-    const display = new SevenSegDisplay(56, 'A');
-    const targetW = b.width * 0.62;
+    this.inletMeterGroup?.destroy();
+    const group = new Container();
+    group.eventMode = 'none';
+
+    const display = new SevenSegDisplay(52, 'A');
+    const targetW = b.width * 0.6;
     const s = targetW / display.panelWidth;
+    const dw = display.panelWidth * s;
+    const dh = display.panelHeight * s;
+    const cx = b.x + b.width / 2;
+    const pad = 9;
+    const stemH = 14;
+    const bezelY = b.y + b.height + stemH - 5;
+
+    const chrome = new Graphics();
+    // stem: tabs over the panel's bottom edge so the meter reads as attached
+    chrome
+      .rect(cx - 16, b.y + b.height - 7, 32, stemH + 7)
+      .fill(0x1b1b1e)
+      .stroke({ color: 0xcdd6d2, width: 2.5 });
+    // bezel matching the Voltmeter face: dark body, cream rounded border
+    chrome
+      .roundRect(cx - dw / 2 - pad, bezelY, dw + pad * 2, dh + pad * 2, 10)
+      .fill(0x1b1b1e)
+      .stroke({ color: 0xcdd6d2, width: 3 });
+    group.addChild(chrome);
+
     display.scale.set(s);
-    display.position.set(b.x + (b.width - display.panelWidth * s) / 2, b.y + b.height + 12);
-    display.visible = this.switchOn;
+    display.position.set(cx - dw / 2, bezelY + pad);
+    group.addChild(display);
+
+    group.visible = this.switchOn;
     this.meterDisplay = display;
-    this.addChild(display);
+    this.inletMeterGroup = group;
+    this.addChild(group);
     this.setMeterValue(0);
   }
 
